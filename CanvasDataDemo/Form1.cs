@@ -1,5 +1,6 @@
 ﻿using CanvasDataDemo.DataMappingSettingModels;
 using CanvasDataDemo.Executors;
+using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -26,6 +27,15 @@ namespace CanvasDataDemo
             InitializeComponent();
         }
 
+        private HttpWebRequest GetWebRequest(string apiKey, string apiSecret, DateTime timestamp, string url)
+        {
+            var signature = HmacHelper.GenerateHMACSignature(apiSecret, url, timestamp);
+            var request = WebRequest.CreateHttp(url);
+            request.Headers["Authorization"] = $"HMACAuth {apiKey}:{signature}";
+            request.Date = timestamp;
+            return request;
+        }
+
         private void btnGetApiData_Click(object sender, EventArgs e)
         {
             var apiSecret = txtApiSecret.Text;
@@ -33,10 +43,7 @@ namespace CanvasDataDemo
             var timestamp = DateTime.Now;
             var url = txtUrl.Text;
 
-            var signature = HmacHelper.GenerateHMACSignature(apiSecret, url, timestamp);
-            var request = WebRequest.CreateHttp(url);
-            request.Headers["Authorization"] = $"HMACAuth {apiKey}:{signature}";
-            request.Date = timestamp;
+            var request = GetWebRequest(apiKey, apiSecret, timestamp, url);
             WebResponse response = request.GetResponse();
             Stream dataStream = response.GetResponseStream();
             string content;
@@ -53,14 +60,17 @@ namespace CanvasDataDemo
 
             var mappingSettingAccountDim = new MappingSetting()
                 .SetSectionPath("artifactsByTable/account_dim/files")
+                .SetMainTableName("account_dim")
                 .AddMappingRule("filename", "filename")
                 .AddMappingRule("url", "url");
 
             var mappingSettingCourseDim = mappingSettingAccountDim.Clone()
-                .SetSectionPath("artifactsByTable/course_dim/files");
+                .SetSectionPath("artifactsByTable/course_dim/files")
+                .SetMainTableName("course_dim");
 
             var mappingSettingRequestsDim = mappingSettingAccountDim.Clone()
-                .SetSectionPath("artifactsByTable/requests/files");
+                .SetSectionPath("artifactsByTable/requests/files")
+                .SetMainTableName("requests");
 
             _listMappingSetting.Add(mappingSettingAccountDim);
             _listMappingSetting.Add(mappingSettingCourseDim);
@@ -161,6 +171,72 @@ namespace CanvasDataDemo
                     }
                 }
             }
+        }
+
+        private void btnReadFile_Click(object sender, EventArgs e)
+        {
+            string fileFolderName = "FileData";
+            if (string.IsNullOrWhiteSpace(txtFileFolder.Text) == false)
+            {
+                fileFolderName = txtFileFolder.Text.Trim();
+            }
+
+            var fullPathFolder = Directory.GetCurrentDirectory() + "\\" + fileFolderName;
+
+            foreach (var path in Directory.GetFiles(fullPathFolder))
+            {
+                var fi = new FileInfo(path);
+                if (fi.Extension == ".gz")
+                {
+                    continue;
+                }
+                ReadFile(path, fi.Name);
+                break;
+            }
+        }
+
+        private void ReadFile(string path, string fileName)
+        {
+            string matchTableName = "";
+            foreach (var setting in _listMappingSetting)
+            {
+                if (fileName.Contains(setting.MainTableName))
+                {
+                    matchTableName = setting.MainTableName;
+                    break;
+                }
+            }
+
+            if (string.IsNullOrEmpty(matchTableName))
+            {
+                return;
+            }
+
+            rtbData.Text = "";
+            foreach (string line in File.ReadLines(path))
+            {
+                rtbData.Text += line + Environment.NewLine;
+                
+            }
+        }
+
+        private void btnGetTableSchema_Click(object sender, EventArgs e)
+        {
+            var apiSecret = txtApiSecret.Text;
+            var apiKey = txtApiKey.Text;
+            var timestamp = DateTime.Now;
+            var url = txtTableSchemaUrl.Text;
+
+            var request = GetWebRequest(apiKey, apiSecret, timestamp, url);
+            WebResponse response = request.GetResponse();
+            Stream dataStream = response.GetResponseStream();
+            string content;
+            using (var reader = new StreamReader(dataStream))
+            {
+                content = reader.ReadToEnd();
+            }
+
+            rtbTableSchema.Text = content;
         }
     }
 }

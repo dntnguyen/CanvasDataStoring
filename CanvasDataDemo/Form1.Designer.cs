@@ -47,7 +47,16 @@ namespace CanvasDataDemo
             this.txtFileFolder = new System.Windows.Forms.TextBox();
             this.lblFileFolder = new System.Windows.Forms.Label();
             this.btnDecompressFile = new System.Windows.Forms.Button();
+            this.btnReadFile = new System.Windows.Forms.Button();
+            this.lblTableSchema = new System.Windows.Forms.Label();
+            this.rtbTableSchema = new System.Windows.Forms.RichTextBox();
+            this.txtTableSchemaUrl = new System.Windows.Forms.TextBox();
+            this.lblTableSchemaUrl = new System.Windows.Forms.Label();
+            this.btnGetTableSchema = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.dataGridView1 = new System.Windows.Forms.DataGridView();
             ((System.ComponentModel.ISupportInitialize)(this.dgwListFileData)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
             // btnGetApiData
@@ -213,11 +222,91 @@ namespace CanvasDataDemo
             this.btnDecompressFile.UseVisualStyleBackColor = true;
             this.btnDecompressFile.Click += new System.EventHandler(this.btnDecompressFile_Click);
             // 
+            // btnReadFile
+            // 
+            this.btnReadFile.Location = new System.Drawing.Point(936, 304);
+            this.btnReadFile.Name = "btnReadFile";
+            this.btnReadFile.Size = new System.Drawing.Size(215, 23);
+            this.btnReadFile.TabIndex = 19;
+            this.btnReadFile.Text = "Read File";
+            this.btnReadFile.UseVisualStyleBackColor = true;
+            this.btnReadFile.Click += new System.EventHandler(this.btnReadFile_Click);
+            // 
+            // lblTableSchema
+            // 
+            this.lblTableSchema.AutoSize = true;
+            this.lblTableSchema.Location = new System.Drawing.Point(644, 197);
+            this.lblTableSchema.Name = "lblTableSchema";
+            this.lblTableSchema.Size = new System.Drawing.Size(79, 15);
+            this.lblTableSchema.TabIndex = 22;
+            this.lblTableSchema.Text = "Table Schema";
+            // 
+            // rtbTableSchema
+            // 
+            this.rtbTableSchema.Location = new System.Drawing.Point(739, 199);
+            this.rtbTableSchema.Name = "rtbTableSchema";
+            this.rtbTableSchema.Size = new System.Drawing.Size(412, 69);
+            this.rtbTableSchema.TabIndex = 21;
+            this.rtbTableSchema.Text = "";
+            // 
+            // txtTableSchemaUrl
+            // 
+            this.txtTableSchemaUrl.Location = new System.Drawing.Point(739, 136);
+            this.txtTableSchemaUrl.Name = "txtTableSchemaUrl";
+            this.txtTableSchemaUrl.Size = new System.Drawing.Size(412, 23);
+            this.txtTableSchemaUrl.TabIndex = 24;
+            this.txtTableSchemaUrl.Text = "https://portal.inshosteddata.com/api/schema/latest";
+            // 
+            // lblTableSchemaUrl
+            // 
+            this.lblTableSchemaUrl.AutoSize = true;
+            this.lblTableSchemaUrl.Location = new System.Drawing.Point(644, 139);
+            this.lblTableSchemaUrl.Name = "lblTableSchemaUrl";
+            this.lblTableSchemaUrl.Size = new System.Drawing.Size(97, 15);
+            this.lblTableSchemaUrl.TabIndex = 23;
+            this.lblTableSchemaUrl.Text = "Table Schema Url";
+            // 
+            // btnGetTableSchema
+            // 
+            this.btnGetTableSchema.Location = new System.Drawing.Point(936, 170);
+            this.btnGetTableSchema.Name = "btnGetTableSchema";
+            this.btnGetTableSchema.Size = new System.Drawing.Size(215, 23);
+            this.btnGetTableSchema.TabIndex = 25;
+            this.btnGetTableSchema.Text = "Get Table Schema";
+            this.btnGetTableSchema.UseVisualStyleBackColor = true;
+            this.btnGetTableSchema.Click += new System.EventHandler(this.btnGetTableSchema_Click);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(644, 353);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(73, 15);
+            this.label1.TabIndex = 27;
+            this.label1.Text = "List File Data";
+            // 
+            // dataGridView1
+            // 
+            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView1.Location = new System.Drawing.Point(739, 353);
+            this.dataGridView1.Name = "dataGridView1";
+            this.dataGridView1.RowTemplate.Height = 25;
+            this.dataGridView1.Size = new System.Drawing.Size(412, 150);
+            this.dataGridView1.TabIndex = 26;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1179, 645);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.dataGridView1);
+            this.Controls.Add(this.btnGetTableSchema);
+            this.Controls.Add(this.txtTableSchemaUrl);
+            this.Controls.Add(this.lblTableSchemaUrl);
+            this.Controls.Add(this.lblTableSchema);
+            this.Controls.Add(this.rtbTableSchema);
+            this.Controls.Add(this.btnReadFile);
             this.Controls.Add(this.btnDecompressFile);
             this.Controls.Add(this.lblFileFolder);
             this.Controls.Add(this.txtFileFolder);
@@ -239,6 +328,7 @@ namespace CanvasDataDemo
             this.Name = "Form1";
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.dgwListFileData)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -264,5 +354,13 @@ namespace CanvasDataDemo
         private System.Windows.Forms.TextBox txtFileFolder;
         private System.Windows.Forms.Label lblFileFolder;
         private System.Windows.Forms.Button btnDecompressFile;
+        private System.Windows.Forms.Button btnReadFile;
+        private System.Windows.Forms.Label lblTableSchema;
+        private System.Windows.Forms.RichTextBox rtbTableSchema;
+        private System.Windows.Forms.TextBox txtTableSchemaUrl;
+        private System.Windows.Forms.Label lblTableSchemaUrl;
+        private System.Windows.Forms.Button btnGetTableSchema;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.DataGridView dataGridView1;
     }
 }

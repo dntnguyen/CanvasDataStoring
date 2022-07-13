@@ -96,6 +96,10 @@ namespace CanvasDataDemo.Executors
                 dt.Columns.Add(col);
             }
 
+            var colTableName = new DataColumn();
+            colTableName.ColumnName = "TableName";
+            dt.Columns.Add(colTableName);
+
             using var doc = JsonDocument.Parse(json);
             JsonElement root = doc.RootElement;
             var sectionNameArray = mappingSetting.SectionPath.Split("/");
@@ -111,7 +115,7 @@ namespace CanvasDataDemo.Executors
                 listJsonObjectElement = GetJsonObjectListFromJsonArray(ele);
             }
 
-            AssignToDataTable(dt, listJsonObjectElement);
+            AssignToDataTable(dt, listJsonObjectElement, mappingSetting.MainTableName);
             return dt;
         }
 
@@ -173,7 +177,7 @@ namespace CanvasDataDemo.Executors
             excel.Dispose();
         }
 
-        private void AssignToDataTable(DataTable dt, List<JsonElement> listJsonObjectElement)
+        private void AssignToDataTable(DataTable dt, List<JsonElement> listJsonObjectElement, string mainTableName = "")
         {
             if (dt.Columns.Count <= 0)
             {
@@ -240,6 +244,7 @@ namespace CanvasDataDemo.Executors
 
                 if (row != null)
                 {
+                    row["TableName"] = mainTableName;
                     dt.Rows.Add(row);
                 }
             }

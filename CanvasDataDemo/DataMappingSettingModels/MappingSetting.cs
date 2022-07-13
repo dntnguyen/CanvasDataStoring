@@ -14,6 +14,8 @@ namespace CanvasDataDemo.DataMappingSettingModels
 
         public List<MappingRule> MappingRules { get; set; } = new List<MappingRule>();
 
+        public string MainTableName { get; set; }
+
         public MappingSetting()
         {
 
@@ -50,6 +52,12 @@ namespace CanvasDataDemo.DataMappingSettingModels
         public MappingSetting SetSectionPath(string sectionPath)
         {
             this.SectionPath = sectionPath;
+            return this;
+        }
+
+        public MappingSetting SetMainTableName(string mainTableName)
+        {
+            this.MainTableName = mainTableName;
             return this;
         }
 
