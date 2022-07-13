@@ -19,6 +19,8 @@ namespace CanvasDataDemo
     {
         private readonly string _separator = "[;]";
 
+        private List<MappingSetting> _listMappingSetting = new List<MappingSetting>();
+
         public Form1()
         {
             InitializeComponent();
@@ -60,6 +62,9 @@ namespace CanvasDataDemo
             var mappingSettingRequestsDim = mappingSettingAccountDim.Clone()
                 .SetSectionPath("artifactsByTable/requests/files");
 
+            _listMappingSetting.Add(mappingSettingAccountDim);
+            _listMappingSetting.Add(mappingSettingCourseDim);
+            _listMappingSetting.Add(mappingSettingRequestsDim);
 
             var mappingHandlerHelper = new MappingHandlerHelper();
             var dt_account_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingAccountDim);
