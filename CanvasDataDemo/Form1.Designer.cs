@@ -53,10 +53,10 @@ namespace CanvasDataDemo
             this.txtTableSchemaUrl = new System.Windows.Forms.TextBox();
             this.lblTableSchemaUrl = new System.Windows.Forms.Label();
             this.btnGetTableSchema = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            this.lblListDataFileJson = new System.Windows.Forms.Label();
+            this.dgwListDataFileJson = new System.Windows.Forms.DataGridView();
             ((System.ComponentModel.ISupportInitialize)(this.dgwListFileData)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgwListDataFileJson)).BeginInit();
             this.SuspendLayout();
             // 
             // btnGetApiData
@@ -276,31 +276,31 @@ namespace CanvasDataDemo
             this.btnGetTableSchema.UseVisualStyleBackColor = true;
             this.btnGetTableSchema.Click += new System.EventHandler(this.btnGetTableSchema_Click);
             // 
-            // label1
+            // lblListDataFileJson
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(644, 353);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(73, 15);
-            this.label1.TabIndex = 27;
-            this.label1.Text = "List File Data";
+            this.lblListDataFileJson.AutoSize = true;
+            this.lblListDataFileJson.Location = new System.Drawing.Point(644, 353);
+            this.lblListDataFileJson.Name = "lblListDataFileJson";
+            this.lblListDataFileJson.Size = new System.Drawing.Size(73, 15);
+            this.lblListDataFileJson.TabIndex = 27;
+            this.lblListDataFileJson.Text = "List File Data";
             // 
-            // dataGridView1
+            // dgwListDataFileJson
             // 
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(739, 353);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.RowTemplate.Height = 25;
-            this.dataGridView1.Size = new System.Drawing.Size(412, 150);
-            this.dataGridView1.TabIndex = 26;
+            this.dgwListDataFileJson.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgwListDataFileJson.Location = new System.Drawing.Point(739, 353);
+            this.dgwListDataFileJson.Name = "dgwListDataFileJson";
+            this.dgwListDataFileJson.RowTemplate.Height = 25;
+            this.dgwListDataFileJson.Size = new System.Drawing.Size(412, 150);
+            this.dgwListDataFileJson.TabIndex = 26;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1179, 645);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.dataGridView1);
+            this.Controls.Add(this.lblListDataFileJson);
+            this.Controls.Add(this.dgwListDataFileJson);
             this.Controls.Add(this.btnGetTableSchema);
             this.Controls.Add(this.txtTableSchemaUrl);
             this.Controls.Add(this.lblTableSchemaUrl);
@@ -327,8 +327,9 @@ namespace CanvasDataDemo
             this.Controls.Add(this.btnGetApiData);
             this.Name = "Form1";
             this.Text = "Form1";
+            this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgwListFileData)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgwListDataFileJson)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -360,7 +361,7 @@ namespace CanvasDataDemo
         private System.Windows.Forms.TextBox txtTableSchemaUrl;
         private System.Windows.Forms.Label lblTableSchemaUrl;
         private System.Windows.Forms.Button btnGetTableSchema;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.DataGridView dataGridView1;
+        private System.Windows.Forms.Label lblListDataFileJson;
+        private System.Windows.Forms.DataGridView dgwListDataFileJson;
     }
 }

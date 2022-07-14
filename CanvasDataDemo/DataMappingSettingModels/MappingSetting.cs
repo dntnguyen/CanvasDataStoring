@@ -16,6 +16,8 @@ namespace CanvasDataDemo.DataMappingSettingModels
 
         public string MainTableName { get; set; }
 
+        public string SchemaTableName { get; set; }
+
         public MappingSetting()
         {
 
@@ -58,6 +60,12 @@ namespace CanvasDataDemo.DataMappingSettingModels
         public MappingSetting SetMainTableName(string mainTableName)
         {
             this.MainTableName = mainTableName;
+            return this;
+        }
+
+        public MappingSetting SetSchemaTableName(string schemaTableName)
+        {
+            this.SchemaTableName = schemaTableName;
             return this;
         }
 
