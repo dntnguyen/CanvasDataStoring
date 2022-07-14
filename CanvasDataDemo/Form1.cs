@@ -1,4 +1,5 @@
-﻿using CanvasDataDemo.DataMappingSettingModels;
+﻿using CanvasDataDemo.DatabaseHelper;
+using CanvasDataDemo.DataMappingSettingModels;
 using CanvasDataDemo.Executors;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -24,6 +25,8 @@ namespace CanvasDataDemo
         private readonly string _separator = "[;]";
 
         private List<MappingSetting> _listMappingSetting = new List<MappingSetting>();
+
+        private Dictionary<string, DataTable> _dicTableData = new Dictionary<string, DataTable>();
 
         public Form1()
         {
@@ -88,7 +91,7 @@ namespace CanvasDataDemo
                 .SetMainTableName("assignment")
                 .SetSchemaTableName("assignment_dim"); ;
 
-            
+
             _listMappingSetting.Add(mappingSettingAccountDim);
             _listMappingSetting.Add(mappingSettingCourseDim);
             _listMappingSetting.Add(mappingSettingRequestsDim);
@@ -200,6 +203,13 @@ namespace CanvasDataDemo
 
         private void btnReadFile_Click(object sender, EventArgs e)
         {
+            _dicTableData.Clear();
+            DataTable dt = GetDataTableListJsonFile();
+            dgwListDataFileJson.DataSource = dt;
+        }
+
+        private DataTable GetDataTableListJsonFile()
+        {
             string fileFolderName = "FileData";
             if (string.IsNullOrWhiteSpace(txtFileFolder.Text) == false)
             {
@@ -231,7 +241,7 @@ namespace CanvasDataDemo
                     continue;
                 }
             }
-            dgwListDataFileJson.DataSource = dtListDataFileJson;
+            return dtListDataFileJson;
         }
 
         private void ReadFile(string path, FileInfo fileName)
@@ -263,12 +273,13 @@ namespace CanvasDataDemo
             var jsonTableSchema = rtbTableSchema.Text;
 
             var mappingSettingCourse = new MappingSetting();
-           
+
             mappingSettingCourse.SetSectionPath($"schema/{schemaTableName}/columns")
+                .SetSchemaTableName(schemaTableName)
                 .AddMappingRule("type", "type")
                 .AddMappingRule("description", "description")
                 .AddMappingRule("name", "name");
-            
+
             MappingDataRawWithSchemaToDataTable(path, jsonTableSchema, mappingSettingCourse, writeFilePath);
         }
 
@@ -294,6 +305,11 @@ namespace CanvasDataDemo
                 }
 
                 dtCourse.Rows.Add(row);
+            }
+
+            if (dtCourse != null && dtCourse.Rows.Count > 0)
+            {
+                _dicTableData.Add(mappingSettingCourse.SchemaTableName, dtCourse);
             }
 
             var json = JsonConvert.SerializeObject(dtCourse);
@@ -322,6 +338,16 @@ namespace CanvasDataDemo
         private void Form1_Load(object sender, EventArgs e)
         {
             var connString = Program.Configuration.GetSection("ConnectionStrings:CanvasDemoDb").Get<string>();
+            MyConnection.SetGlobalConnectionString(connString);
+        }
+
+        private void btnCreateTableInDatabase_Click(object sender, EventArgs e)
+        {
+            var databaseProvider = new MyDatabaseProvider();
+            foreach (var item in _dicTableData)
+            {
+                databaseProvider.GenerateTableInDatabase(item.Key, item.Value);
+            }
         }
     }
 }

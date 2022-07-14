@@ -55,6 +55,7 @@ namespace CanvasDataDemo
             this.btnGetTableSchema = new System.Windows.Forms.Button();
             this.lblListDataFileJson = new System.Windows.Forms.Label();
             this.dgwListDataFileJson = new System.Windows.Forms.DataGridView();
+            this.btnCreateTableInDatabase = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgwListFileData)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgwListDataFileJson)).BeginInit();
             this.SuspendLayout();
@@ -294,11 +295,22 @@ namespace CanvasDataDemo
             this.dgwListDataFileJson.Size = new System.Drawing.Size(412, 150);
             this.dgwListDataFileJson.TabIndex = 26;
             // 
+            // btnCreateTableInDatabase
+            // 
+            this.btnCreateTableInDatabase.Location = new System.Drawing.Point(936, 537);
+            this.btnCreateTableInDatabase.Name = "btnCreateTableInDatabase";
+            this.btnCreateTableInDatabase.Size = new System.Drawing.Size(215, 23);
+            this.btnCreateTableInDatabase.TabIndex = 28;
+            this.btnCreateTableInDatabase.Text = "Create Table In Database";
+            this.btnCreateTableInDatabase.UseVisualStyleBackColor = true;
+            this.btnCreateTableInDatabase.Click += new System.EventHandler(this.btnCreateTableInDatabase_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1179, 645);
+            this.Controls.Add(this.btnCreateTableInDatabase);
             this.Controls.Add(this.lblListDataFileJson);
             this.Controls.Add(this.dgwListDataFileJson);
             this.Controls.Add(this.btnGetTableSchema);
@@ -363,5 +375,6 @@ namespace CanvasDataDemo
         private System.Windows.Forms.Button btnGetTableSchema;
         private System.Windows.Forms.Label lblListDataFileJson;
         private System.Windows.Forms.DataGridView dgwListDataFileJson;
+        private System.Windows.Forms.Button btnCreateTableInDatabase;
     }
 }
