@@ -91,12 +91,18 @@ namespace CanvasDataDemo
                 .SetMainTableName("assignment")
                 .SetSchemaTableName("assignment_dim"); ;
 
+            var mappingSettingUserDim = mappingSettingAccountDim.Clone()
+                .SetSectionPath("artifactsByTable/user_dim/files")
+                .SetMainTableName("user_dim")
+                .SetSchemaTableName("user"); ;
+
 
             _listMappingSetting.Add(mappingSettingAccountDim);
             _listMappingSetting.Add(mappingSettingCourseDim);
             _listMappingSetting.Add(mappingSettingRequestsDim);
             _listMappingSetting.Add(mappingSettingTermDim);
             _listMappingSetting.Add(mappingSettingAssignmentDim);
+            _listMappingSetting.Add(mappingSettingUserDim);
 
             var mappingHandlerHelper = new MappingHandlerHelper();
             var dt_account_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingAccountDim);
@@ -104,11 +110,13 @@ namespace CanvasDataDemo
             var dt_requests_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingRequestsDim);
             var dt_enrollment_term_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingTermDim);
             var dt_assignment_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingAssignmentDim);
+            var dt_user_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingUserDim);
 
             dt_account_dim_files.Merge(dt_course_dim_files);
             dt_account_dim_files.Merge(dt_requests_dim_files);
             dt_account_dim_files.Merge(dt_enrollment_term_dim_files);
             dt_account_dim_files.Merge(dt_assignment_dim_files);
+            dt_account_dim_files.Merge(dt_user_dim_files);
 
             dgwListFileData.DataSource = dt_account_dim_files;
 
