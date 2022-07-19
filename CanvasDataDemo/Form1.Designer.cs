@@ -56,6 +56,7 @@ namespace CanvasDataDemo
             this.lblListDataFileJson = new System.Windows.Forms.Label();
             this.dgwListDataFileJson = new System.Windows.Forms.DataGridView();
             this.btnCreateTableInDatabase = new System.Windows.Forms.Button();
+            this.btnOpenFolder = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgwListFileData)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgwListDataFileJson)).BeginInit();
             this.SuspendLayout();
@@ -305,11 +306,22 @@ namespace CanvasDataDemo
             this.btnCreateTableInDatabase.UseVisualStyleBackColor = true;
             this.btnCreateTableInDatabase.Click += new System.EventHandler(this.btnCreateTableInDatabase_Click);
             // 
+            // btnOpenFolder
+            // 
+            this.btnOpenFolder.Location = new System.Drawing.Point(739, 88);
+            this.btnOpenFolder.Name = "btnOpenFolder";
+            this.btnOpenFolder.Size = new System.Drawing.Size(177, 23);
+            this.btnOpenFolder.TabIndex = 29;
+            this.btnOpenFolder.Text = "Open Folder";
+            this.btnOpenFolder.UseVisualStyleBackColor = true;
+            this.btnOpenFolder.Click += new System.EventHandler(this.btnOpenFolder_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1179, 645);
+            this.Controls.Add(this.btnOpenFolder);
             this.Controls.Add(this.btnCreateTableInDatabase);
             this.Controls.Add(this.lblListDataFileJson);
             this.Controls.Add(this.dgwListDataFileJson);
@@ -376,5 +388,6 @@ namespace CanvasDataDemo
         private System.Windows.Forms.Label lblListDataFileJson;
         private System.Windows.Forms.DataGridView dgwListDataFileJson;
         private System.Windows.Forms.Button btnCreateTableInDatabase;
+        private System.Windows.Forms.Button btnOpenFolder;
     }
 }

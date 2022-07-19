@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
@@ -79,28 +80,34 @@ namespace CanvasDataDemo
             var mappingSettingRequestsDim = mappingSettingAccountDim.Clone()
                 .SetSectionPath("artifactsByTable/requests/files")
                 .SetMainTableName("requests")
-                .SetSchemaTableName("requests"); ;
+                .SetSchemaTableName("requests");
 
             var mappingSettingTermDim = mappingSettingAccountDim.Clone()
                 .SetSectionPath("artifactsByTable/enrollment_term_dim/files")
                 .SetMainTableName("enrollment_term")
-                .SetSchemaTableName("enrollment_term"); ;
+                .SetSchemaTableName("enrollment_term");
+
+            var mappingSettingEnrollmentDim = mappingSettingAccountDim.Clone()
+                .SetSectionPath("artifactsByTable/enrollment_dim/files")
+                .SetMainTableName("enrollment_dim")
+                .SetSchemaTableName("enrollment_dim");
 
             var mappingSettingAssignmentDim = mappingSettingAccountDim.Clone()
                 .SetSectionPath("artifactsByTable/assignment_dim/files")
                 .SetMainTableName("assignment")
-                .SetSchemaTableName("assignment_dim"); ;
+                .SetSchemaTableName("assignment_dim");
 
             var mappingSettingUserDim = mappingSettingAccountDim.Clone()
                 .SetSectionPath("artifactsByTable/user_dim/files")
                 .SetMainTableName("user_dim")
-                .SetSchemaTableName("user"); ;
+                .SetSchemaTableName("user");
 
 
             _listMappingSetting.Add(mappingSettingAccountDim);
             _listMappingSetting.Add(mappingSettingCourseDim);
             _listMappingSetting.Add(mappingSettingRequestsDim);
             _listMappingSetting.Add(mappingSettingTermDim);
+            _listMappingSetting.Add(mappingSettingEnrollmentDim);
             _listMappingSetting.Add(mappingSettingAssignmentDim);
             _listMappingSetting.Add(mappingSettingUserDim);
 
@@ -109,12 +116,14 @@ namespace CanvasDataDemo
             var dt_course_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingCourseDim);
             var dt_requests_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingRequestsDim);
             var dt_enrollment_term_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingTermDim);
+            var dt_enrollment_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingEnrollmentDim);
             var dt_assignment_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingAssignmentDim);
             var dt_user_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingUserDim);
 
             dt_account_dim_files.Merge(dt_course_dim_files);
             dt_account_dim_files.Merge(dt_requests_dim_files);
             dt_account_dim_files.Merge(dt_enrollment_term_dim_files);
+            dt_account_dim_files.Merge(dt_enrollment_dim_files);
             dt_account_dim_files.Merge(dt_assignment_dim_files);
             dt_account_dim_files.Merge(dt_user_dim_files);
 
@@ -309,7 +318,7 @@ namespace CanvasDataDemo
                 int colCount = values.Length;
                 for (int i = 0; i < colCount; i++)
                 {
-                    row[i] = values[i];
+                    row[i] = this.RemoveNullValue(values[i]);
                 }
 
                 dtCourse.Rows.Add(row);
@@ -322,6 +331,21 @@ namespace CanvasDataDemo
 
             var json = JsonConvert.SerializeObject(dtCourse);
             File.WriteAllText(writeFilePath, json);
+        }
+
+        private string RemoveNullValue(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+
+            if (input.Trim().ToLower() == @"\n")
+            {
+                return string.Empty;
+            }
+
+            return input;
         }
 
         private void btnGetTableSchema_Click(object sender, EventArgs e)
@@ -355,6 +379,25 @@ namespace CanvasDataDemo
             foreach (var item in _dicTableData)
             {
                 databaseProvider.GenerateTableInDatabase(item.Key, item.Value);
+            }
+        }
+
+        private void btnOpenFolder_Click(object sender, EventArgs e)
+        {
+            string fileFolderName = "FileData";
+            if (string.IsNullOrWhiteSpace(txtFileFolder.Text) == false)
+            {
+                fileFolderName = txtFileFolder.Text.Trim();
+            }
+
+            var fullPathFolder = Directory.GetCurrentDirectory() + "\\" + fileFolderName;
+            try
+            {
+                Process.Start(fullPathFolder);
+            }
+            catch (Exception ex)
+            {
+
             }
         }
     }

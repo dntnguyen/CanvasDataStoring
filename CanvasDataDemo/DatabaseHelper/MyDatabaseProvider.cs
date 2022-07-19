@@ -50,11 +50,7 @@ namespace CanvasDataDemo.DatabaseHelper
         public ResponseResult GenerateTableInDatabase(string tableName, DataTable dtData)
         {
             var response = new ResponseResult();
-            if (tableName != "user")
-            {
-                return response;
-            }
-
+            object testValue;
             try
             {
                 //syllabus_body
@@ -85,11 +81,14 @@ namespace CanvasDataDemo.DatabaseHelper
                 using (var sqlConnection = new SqlConnection(_connectionString))
                 {
                     sqlConnection.Open();
-                    sqlConnection.Execute(sqlScriptCreateTable,
+                    if (tableName != "requests")
+                    {
+                        sqlConnection.Execute(sqlScriptCreateTable,
 
-                        parameters,
-                        commandType: CommandType.Text,
-                        commandTimeout: _defaultQueryTimeoutInSecond);
+                            parameters,
+                            commandType: CommandType.Text,
+                            commandTimeout: _defaultQueryTimeoutInSecond);
+                    }
 
                     string columnsScriptForInsert = "";
                     foreach (DataColumn col in dtData.Columns)
@@ -115,8 +114,15 @@ namespace CanvasDataDemo.DatabaseHelper
                             ////valueChildString += $"N'{row[col]}',";
                             var insertParamName = $"@{ReplaceSpecialTextInDatabase(col.ColumnName)}";
                             valueChildString += $"{insertParamName},";
-
-                            insertParameters.Add(insertParamName, row[col]);
+                            testValue = row[col];
+                            if (row.IsNull(col) || string.IsNullOrEmpty(row[col].ToString()))
+                            {
+                                insertParameters.Add(insertParamName, DBNull.Value, DbType.String);
+                            }
+                            else
+                            {
+                                insertParameters.Add(insertParamName, row[col]);
+                            }
                         }
                         if (valueChildString.Substring(valueChildString.Length - 1, 1) == ",")
                         {
