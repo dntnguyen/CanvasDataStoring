@@ -8,15 +8,15 @@ namespace CanvasDataDemo.Views
 {
     public interface IMainFormSettingView
     {
-        string SqlConnectionString { get; set; }
+        string? SqlConnectionString { get; set; }
 
-        string ApiKey { get; set; }
+        string? ApiKey { get; set; }
 
-        string ApiSecret { get; set; }
+        string? ApiSecret { get; set; }
 
-        string FileLatestSchemaUrl { get; set; }
+        string? FileLatestSchemaUrl { get; set; }
 
-        string TableSchemaUrl { get; set; }
+        string? TableSchemaUrl { get; set; }
 
     }
 }

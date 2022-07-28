@@ -12,7 +12,13 @@ namespace CanvasDataDemo.Utilities
 {
     public class CanvasDataApiHelper : ICanvasDataApiHelper
     {
-        public string GetFileLatestSchema(string apiKey, string apiSecret, string url)
+        public IEnumerable<TableSchema> GetLatestTableSchema(string apiKey, string apiSecret, string url)
+        {
+            string json = GetCanvasDataApiContentJson(apiKey, apiSecret, url);
+            return null;
+        }
+
+        private string GetCanvasDataApiContentJson(string apiKey, string apiSecret, string url)
         {
             var request = GetWebRequest(apiKey, apiSecret, DateTime.Now, url);
             WebResponse response = request.GetResponse();

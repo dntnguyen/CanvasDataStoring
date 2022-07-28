@@ -24,15 +24,15 @@ namespace CanvasDataDemo
         private readonly ISettingHelper _settingHelper;
         private readonly ICanvasDataApiHelper _canvasDataApiHelper;
 
-        public string SqlConnectionString { get => txtSqlConnectionString.Text; set => txtSqlConnectionString.Text = value; }
+        public string? SqlConnectionString { get => txtSqlConnectionString.Text; set => txtSqlConnectionString.Text = value; }
 
-        public string ApiKey { get => txtApiKey.Text; set => txtApiKey.Text = value; }
+        public string? ApiKey { get => txtApiKey.Text; set => txtApiKey.Text = value; }
 
-        public string ApiSecret { get => txtApiSecret.Text; set => txtApiSecret.Text = value; }
+        public string? ApiSecret { get => txtApiSecret.Text; set => txtApiSecret.Text = value; }
 
-        public string FileLatestSchemaUrl { get => txtFileLatestSchemaUrl.Text; set => txtFileLatestSchemaUrl.Text = value; }
+        public string? FileLatestSchemaUrl { get => txtFileLatestSchemaUrl.Text; set => txtFileLatestSchemaUrl.Text = value; }
 
-        public string TableSchemaUrl { get => txtTableSchemaUrl.Text; set => txtTableSchemaUrl.Text = value; }
+        public string? TableSchemaUrl { get => txtTableSchemaUrl.Text; set => txtTableSchemaUrl.Text = value; }
 
         public MainForm(ISettingHelper settingHelper, ICanvasDataApiHelper canvasDataApiHelper)
         {
@@ -71,6 +71,25 @@ namespace CanvasDataDemo
         {
             LoadSettingFromFile();
         }
+        private void btnTestConnection_Click(object sender, EventArgs e)
+        {
+            string sqlConnectionString = txtSqlConnectionString.Text;
+            if (string.IsNullOrWhiteSpace(sqlConnectionString))
+            {
+                MessageBox.Show("Please input connection string");
+            }
+
+            var testConnectionErrorDescription = MyDatabaseHelper.TestConnection(sqlConnectionString);
+
+            if (string.IsNullOrEmpty(testConnectionErrorDescription))
+            {
+                MessageBox.Show("Success");
+            }
+            else
+            {
+                MessageBox.Show($"Failed to connection to database: {testConnectionErrorDescription}");
+            }
+        }
 
         private void btnSaveSettings_Click(object sender, EventArgs e)
         {
@@ -79,7 +98,7 @@ namespace CanvasDataDemo
 
         private void btnRunGetDataJob_Click(object sender, EventArgs e)
         {
-            string fileLatestSchema = this._canvasDataApiHelper.GetFileLatestSchema(ApiKey, ApiSecret, FileLatestSchemaUrl);
+            var listLatestTableSchema = this._canvasDataApiHelper.GetLatestTableSchema(ApiKey, ApiSecret, FileLatestSchemaUrl);
             GetTable(fileLatestSchema);
         }
 

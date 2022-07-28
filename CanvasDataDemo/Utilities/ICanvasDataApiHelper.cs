@@ -1,9 +1,11 @@
-﻿using System;
+﻿using CanvasDataDemo.Models;
+using System;
+using System.Collections.Generic;
 
 namespace CanvasDataDemo.Utilities
 {
     public interface ICanvasDataApiHelper
     {
-        string GetFileLatestSchema(string apiKey, string apiSecret, string url);
+        IEnumerable<TableSchema> GetLatestTableSchema(string apiKey, string apiSecret, string url);
     }
 }

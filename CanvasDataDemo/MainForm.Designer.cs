@@ -45,6 +45,7 @@
             this.lblApiKey = new System.Windows.Forms.Label();
             this.txtFileLatestSchemaUrl = new System.Windows.Forms.TextBox();
             this.lblUrl = new System.Windows.Forms.Label();
+            this.btnTestConnection = new System.Windows.Forms.Button();
             this.tabMain.SuspendLayout();
             this.tabPageMain.SuspendLayout();
             this.tabPageSettings.SuspendLayout();
@@ -106,6 +107,7 @@
             // 
             // tabPageSettings
             // 
+            this.tabPageSettings.Controls.Add(this.btnTestConnection);
             this.tabPageSettings.Controls.Add(this.txtSqlConnectionString);
             this.tabPageSettings.Controls.Add(this.lblSqlConnectionString);
             this.tabPageSettings.Controls.Add(this.btnSaveSettings);
@@ -143,7 +145,7 @@
             // 
             // btnSaveSettings
             // 
-            this.btnSaveSettings.Location = new System.Drawing.Point(422, 289);
+            this.btnSaveSettings.Location = new System.Drawing.Point(422, 264);
             this.btnSaveSettings.Name = "btnSaveSettings";
             this.btnSaveSettings.Size = new System.Drawing.Size(158, 23);
             this.btnSaveSettings.TabIndex = 33;
@@ -219,6 +221,16 @@
             this.lblUrl.TabIndex = 25;
             this.lblUrl.Text = "File Latest Schema Url";
             // 
+            // btnTestConnection
+            // 
+            this.btnTestConnection.Location = new System.Drawing.Point(168, 264);
+            this.btnTestConnection.Name = "btnTestConnection";
+            this.btnTestConnection.Size = new System.Drawing.Size(158, 23);
+            this.btnTestConnection.TabIndex = 36;
+            this.btnTestConnection.Text = "Test Connection";
+            this.btnTestConnection.UseVisualStyleBackColor = true;
+            this.btnTestConnection.Click += new System.EventHandler(this.btnTestConnection_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -255,5 +267,6 @@
         private System.Windows.Forms.Button btnSaveSettings;
         private System.Windows.Forms.TextBox txtSqlConnectionString;
         private System.Windows.Forms.Label lblSqlConnectionString;
+        private System.Windows.Forms.Button btnTestConnection;
     }
 }

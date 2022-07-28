@@ -57,6 +57,11 @@ namespace CanvasDataDemo
             this.dgwListDataFileJson = new System.Windows.Forms.DataGridView();
             this.btnCreateTableInDatabase = new System.Windows.Forms.Button();
             this.btnOpenFolder = new System.Windows.Forms.Button();
+            this.lblFilesOfTable = new System.Windows.Forms.Label();
+            this.rtbFilesOfTable = new System.Windows.Forms.RichTextBox();
+            this.btnGetFilesOfTable = new System.Windows.Forms.Button();
+            this.txtGetTableName = new System.Windows.Forms.TextBox();
+            this.lblGetTableName = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgwListFileData)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgwListDataFileJson)).BeginInit();
             this.SuspendLayout();
@@ -226,7 +231,7 @@ namespace CanvasDataDemo
             // 
             // btnReadFile
             // 
-            this.btnReadFile.Location = new System.Drawing.Point(936, 304);
+            this.btnReadFile.Location = new System.Drawing.Point(936, 274);
             this.btnReadFile.Name = "btnReadFile";
             this.btnReadFile.Size = new System.Drawing.Size(215, 23);
             this.btnReadFile.TabIndex = 19;
@@ -290,15 +295,15 @@ namespace CanvasDataDemo
             // dgwListDataFileJson
             // 
             this.dgwListDataFileJson.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgwListDataFileJson.Location = new System.Drawing.Point(739, 353);
+            this.dgwListDataFileJson.Location = new System.Drawing.Point(739, 303);
             this.dgwListDataFileJson.Name = "dgwListDataFileJson";
             this.dgwListDataFileJson.RowTemplate.Height = 25;
-            this.dgwListDataFileJson.Size = new System.Drawing.Size(412, 150);
+            this.dgwListDataFileJson.Size = new System.Drawing.Size(412, 86);
             this.dgwListDataFileJson.TabIndex = 26;
             // 
             // btnCreateTableInDatabase
             // 
-            this.btnCreateTableInDatabase.Location = new System.Drawing.Point(936, 537);
+            this.btnCreateTableInDatabase.Location = new System.Drawing.Point(936, 395);
             this.btnCreateTableInDatabase.Name = "btnCreateTableInDatabase";
             this.btnCreateTableInDatabase.Size = new System.Drawing.Size(215, 23);
             this.btnCreateTableInDatabase.TabIndex = 28;
@@ -316,11 +321,59 @@ namespace CanvasDataDemo
             this.btnOpenFolder.UseVisualStyleBackColor = true;
             this.btnOpenFolder.Click += new System.EventHandler(this.btnOpenFolder_Click);
             // 
+            // lblFilesOfTable
+            // 
+            this.lblFilesOfTable.AutoSize = true;
+            this.lblFilesOfTable.Location = new System.Drawing.Point(644, 478);
+            this.lblFilesOfTable.Name = "lblFilesOfTable";
+            this.lblFilesOfTable.Size = new System.Drawing.Size(74, 15);
+            this.lblFilesOfTable.TabIndex = 32;
+            this.lblFilesOfTable.Text = "Files of Table";
+            // 
+            // rtbFilesOfTable
+            // 
+            this.rtbFilesOfTable.Location = new System.Drawing.Point(739, 476);
+            this.rtbFilesOfTable.Name = "rtbFilesOfTable";
+            this.rtbFilesOfTable.Size = new System.Drawing.Size(412, 96);
+            this.rtbFilesOfTable.TabIndex = 31;
+            this.rtbFilesOfTable.Text = "";
+            // 
+            // btnGetFilesOfTable
+            // 
+            this.btnGetFilesOfTable.Location = new System.Drawing.Point(936, 439);
+            this.btnGetFilesOfTable.Name = "btnGetFilesOfTable";
+            this.btnGetFilesOfTable.Size = new System.Drawing.Size(215, 23);
+            this.btnGetFilesOfTable.TabIndex = 30;
+            this.btnGetFilesOfTable.Text = "Get File Of Table";
+            this.btnGetFilesOfTable.UseVisualStyleBackColor = true;
+            this.btnGetFilesOfTable.Click += new System.EventHandler(this.btnGetFilesOfTable_Click);
+            // 
+            // txtGetTableName
+            // 
+            this.txtGetTableName.Location = new System.Drawing.Point(739, 440);
+            this.txtGetTableName.Name = "txtGetTableName";
+            this.txtGetTableName.Size = new System.Drawing.Size(191, 23);
+            this.txtGetTableName.TabIndex = 33;
+            // 
+            // lblGetTableName
+            // 
+            this.lblGetTableName.AutoSize = true;
+            this.lblGetTableName.Location = new System.Drawing.Point(644, 443);
+            this.lblGetTableName.Name = "lblGetTableName";
+            this.lblGetTableName.Size = new System.Drawing.Size(69, 15);
+            this.lblGetTableName.TabIndex = 34;
+            this.lblGetTableName.Text = "Table Name";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1179, 645);
+            this.Controls.Add(this.lblGetTableName);
+            this.Controls.Add(this.txtGetTableName);
+            this.Controls.Add(this.lblFilesOfTable);
+            this.Controls.Add(this.rtbFilesOfTable);
+            this.Controls.Add(this.btnGetFilesOfTable);
             this.Controls.Add(this.btnOpenFolder);
             this.Controls.Add(this.btnCreateTableInDatabase);
             this.Controls.Add(this.lblListDataFileJson);
@@ -389,5 +442,10 @@ namespace CanvasDataDemo
         private System.Windows.Forms.DataGridView dgwListDataFileJson;
         private System.Windows.Forms.Button btnCreateTableInDatabase;
         private System.Windows.Forms.Button btnOpenFolder;
+        private System.Windows.Forms.Label lblFilesOfTable;
+        private System.Windows.Forms.RichTextBox rtbFilesOfTable;
+        private System.Windows.Forms.Button btnGetFilesOfTable;
+        private System.Windows.Forms.TextBox txtGetTableName;
+        private System.Windows.Forms.Label lblGetTableName;
     }
 }
