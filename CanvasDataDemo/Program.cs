@@ -1,4 +1,7 @@
+using CanvasDataDemo.Utilities;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +13,9 @@ namespace CanvasDataDemo
     static class Program
     {
         public static IConfiguration Configuration;
+
+        public static IServiceProvider ServiceProvider { get; private set; }
+
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
@@ -19,10 +25,26 @@ namespace CanvasDataDemo
             var builder = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
             Configuration = builder.Build();
+
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+
+            var host = CreateHostBuilder().Build();
+            ServiceProvider = host.Services;
+
+            Application.Run(ServiceProvider.GetRequiredService<Form1>());
+        }
+
+        static IHostBuilder CreateHostBuilder()
+        {
+            return Host.CreateDefaultBuilder()
+                .ConfigureServices((context, services) => {
+                    services.AddTransient<ISettingHelper, SettingHelper>();
+                    services.AddTransient<ICanvasDataApiHelper, CanvasDataApiHelper>();
+                    services.AddTransient<MainForm>();
+                    services.AddTransient<Form1>();
+                });
         }
     }
 }

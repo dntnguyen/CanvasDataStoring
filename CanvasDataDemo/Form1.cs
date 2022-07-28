@@ -1,6 +1,7 @@
 ﻿using CanvasDataDemo.DatabaseHelper;
 using CanvasDataDemo.DataMappingSettingModels;
 using CanvasDataDemo.Executors;
+using CanvasDataDemo.Models;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using OfficeOpenXml;
@@ -62,81 +63,138 @@ namespace CanvasDataDemo
             rtbDataFromApi.Text = content;
         }
 
+        private IEnumerable<FileLatestSchema> LoopJsonToFileList()
+        {
+            var listFileLatestSchema = new List<FileLatestSchema>();
+
+            string json = rtbDataFromApi.Text;
+
+            using var doc = JsonDocument.Parse(json);
+            JsonElement root = doc.RootElement;
+
+            if (root.TryGetProperty("artifactsByTable", out JsonElement artifactsByTable))
+            {
+                var artifactsByTableProps = artifactsByTable.EnumerateObject();
+                while (artifactsByTableProps.MoveNext())
+                {
+                    var artiProp = artifactsByTableProps.Current;
+                    var artiName = artiProp.Name;
+                    var artiValue = artiProp.Value;
+
+                    var fileLatestSchema = new FileLatestSchema();
+                    fileLatestSchema.TableName = artiName;
+
+                    if (artiValue.TryGetProperty("files", out JsonElement files))
+                    {
+                        var FileArraysEle = files.EnumerateArray();
+                        while (FileArraysEle.MoveNext())
+                        {
+                            var fileObjectEle = FileArraysEle.Current;
+
+                            var fileProp = fileObjectEle.EnumerateObject();
+                            while (fileProp.MoveNext())
+                            {
+                                var filePropDetail = fileProp.Current;
+                                var propDetailName = filePropDetail.Name;
+                                var propDetailValue = filePropDetail.Value;
+
+                                if (propDetailName == "url")
+                                {
+                                    fileLatestSchema.FileInfo.Url = propDetailValue.GetString();
+                                }
+                                else if (propDetailName == "filename")
+                                {
+                                    fileLatestSchema.FileInfo.FileName = propDetailValue.GetString();
+                                }
+                            }
+                        }
+                    }
+
+                    listFileLatestSchema.Add(fileLatestSchema);
+                }
+            }
+
+            return listFileLatestSchema;
+        }
+
         private void btnGetListFileData_Click(object sender, EventArgs e)
         {
 
-            var mappingSettingAccountDim = new MappingSetting()
-                .SetSectionPath("artifactsByTable/account_dim/files")
-                .SetMainTableName("account_dim")
-                .SetSchemaTableName("account")
-                .AddMappingRule("filename", "filename")
-                .AddMappingRule("url", "url");
+            LoopJsonToFileList();
+            return;
 
-            var mappingSettingCourseDim = mappingSettingAccountDim.Clone()
-                .SetSectionPath("artifactsByTable/course_dim/files")
-                .SetMainTableName("course_dim")
-                .SetSchemaTableName("course");
+            ////var mappingSettingAccountDim = new MappingSetting()
+            ////    .SetSectionPath("artifactsByTable/account_dim/files")
+            ////    .SetMainTableName("account_dim")
+            ////    .SetSchemaTableName("account")
+            ////    .AddMappingRule("filename", "filename")
+            ////    .AddMappingRule("url", "url");
 
-            var mappingSettingRequestsDim = mappingSettingAccountDim.Clone()
-                .SetSectionPath("artifactsByTable/requests/files")
-                .SetMainTableName("requests")
-                .SetSchemaTableName("requests");
+            ////var mappingSettingCourseDim = mappingSettingAccountDim.Clone()
+            ////    .SetSectionPath("artifactsByTable/course_dim/files")
+            ////    .SetMainTableName("course_dim")
+            ////    .SetSchemaTableName("course");
 
-            var mappingSettingTermDim = mappingSettingAccountDim.Clone()
-                .SetSectionPath("artifactsByTable/enrollment_term_dim/files")
-                .SetMainTableName("enrollment_term")
-                .SetSchemaTableName("enrollment_term");
+            ////var mappingSettingRequestsDim = mappingSettingAccountDim.Clone()
+            ////    .SetSectionPath("artifactsByTable/requests/files")
+            ////    .SetMainTableName("requests")
+            ////    .SetSchemaTableName("requests");
 
-            var mappingSettingEnrollmentDim = mappingSettingAccountDim.Clone()
-                .SetSectionPath("artifactsByTable/enrollment_dim/files")
-                .SetMainTableName("enrollment_dim")
-                .SetSchemaTableName("enrollment_dim");
+            ////var mappingSettingTermDim = mappingSettingAccountDim.Clone()
+            ////    .SetSectionPath("artifactsByTable/enrollment_term_dim/files")
+            ////    .SetMainTableName("enrollment_term")
+            ////    .SetSchemaTableName("enrollment_term");
 
-            var mappingSettingAssignmentDim = mappingSettingAccountDim.Clone()
-                .SetSectionPath("artifactsByTable/assignment_dim/files")
-                .SetMainTableName("assignment")
-                .SetSchemaTableName("assignment_dim");
+            ////var mappingSettingEnrollmentDim = mappingSettingAccountDim.Clone()
+            ////    .SetSectionPath("artifactsByTable/enrollment_dim/files")
+            ////    .SetMainTableName("enrollment_dim")
+            ////    .SetSchemaTableName("enrollment_dim");
 
-            var mappingSettingUserDim = mappingSettingAccountDim.Clone()
-                .SetSectionPath("artifactsByTable/user_dim/files")
-                .SetMainTableName("user_dim")
-                .SetSchemaTableName("user");
+            ////var mappingSettingAssignmentDim = mappingSettingAccountDim.Clone()
+            ////    .SetSectionPath("artifactsByTable/assignment_dim/files")
+            ////    .SetMainTableName("assignment")
+            ////    .SetSchemaTableName("assignment_dim");
 
-            var mappingSettingCourseScoreFact = mappingSettingAccountDim.Clone()
-                .SetSectionPath("artifactsByTable/course_score_fact/files")
-                .SetMainTableName("course_score_fact")
-                .SetSchemaTableName("course_score_fact");
+            ////var mappingSettingUserDim = mappingSettingAccountDim.Clone()
+            ////    .SetSectionPath("artifactsByTable/user_dim/files")
+            ////    .SetMainTableName("user_dim")
+            ////    .SetSchemaTableName("user");
 
-            _listMappingSetting.Add(mappingSettingAccountDim);
-            _listMappingSetting.Add(mappingSettingCourseDim);
-            _listMappingSetting.Add(mappingSettingRequestsDim);
-            _listMappingSetting.Add(mappingSettingTermDim);
-            _listMappingSetting.Add(mappingSettingEnrollmentDim);
-            _listMappingSetting.Add(mappingSettingAssignmentDim);
-            _listMappingSetting.Add(mappingSettingUserDim);
-            _listMappingSetting.Add(mappingSettingCourseScoreFact);
+            ////var mappingSettingCourseScoreFact = mappingSettingAccountDim.Clone()
+            ////    .SetSectionPath("artifactsByTable/course_score_fact/files")
+            ////    .SetMainTableName("course_score_fact")
+            ////    .SetSchemaTableName("course_score_fact");
 
-            var mappingHandlerHelper = new MappingHandlerHelper();
-            var dt_account_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingAccountDim);
-            var dt_course_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingCourseDim);
-            var dt_requests_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingRequestsDim);
-            var dt_enrollment_term_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingTermDim);
-            var dt_enrollment_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingEnrollmentDim);
-            var dt_assignment_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingAssignmentDim);
-            var dt_user_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingUserDim);
-            var dt_course_score_fact_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingCourseScoreFact);
+            ////_listMappingSetting.Add(mappingSettingAccountDim);
+            ////_listMappingSetting.Add(mappingSettingCourseDim);
+            ////_listMappingSetting.Add(mappingSettingRequestsDim);
+            ////_listMappingSetting.Add(mappingSettingTermDim);
+            ////_listMappingSetting.Add(mappingSettingEnrollmentDim);
+            ////_listMappingSetting.Add(mappingSettingAssignmentDim);
+            ////_listMappingSetting.Add(mappingSettingUserDim);
+            ////_listMappingSetting.Add(mappingSettingCourseScoreFact);
 
-            dt_account_dim_files.Merge(dt_course_dim_files);
-            dt_account_dim_files.Merge(dt_requests_dim_files);
-            dt_account_dim_files.Merge(dt_enrollment_term_dim_files);
-            dt_account_dim_files.Merge(dt_enrollment_dim_files);
-            dt_account_dim_files.Merge(dt_assignment_dim_files);
-            dt_account_dim_files.Merge(dt_user_dim_files);
-            dt_account_dim_files.Merge(dt_course_score_fact_files);
+            ////var mappingHandlerHelper = new MappingHandlerHelper();
+            ////var dt_account_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingAccountDim);
+            ////var dt_course_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingCourseDim);
+            ////var dt_requests_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingRequestsDim);
+            ////var dt_enrollment_term_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingTermDim);
+            ////var dt_enrollment_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingEnrollmentDim);
+            ////var dt_assignment_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingAssignmentDim);
+            ////var dt_user_dim_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingUserDim);
+            ////var dt_course_score_fact_files = mappingHandlerHelper.Map(rtbDataFromApi.Text, mappingSettingCourseScoreFact);
 
-            dgwListFileData.DataSource = dt_account_dim_files;
+            ////dt_account_dim_files.Merge(dt_course_dim_files);
+            ////dt_account_dim_files.Merge(dt_requests_dim_files);
+            ////dt_account_dim_files.Merge(dt_enrollment_term_dim_files);
+            ////dt_account_dim_files.Merge(dt_enrollment_dim_files);
+            ////dt_account_dim_files.Merge(dt_assignment_dim_files);
+            ////dt_account_dim_files.Merge(dt_user_dim_files);
+            ////dt_account_dim_files.Merge(dt_course_score_fact_files);
 
-            GetFileLinkFromDataTable(dt_account_dim_files);
+            ////dgwListFileData.DataSource = dt_account_dim_files;
+
+            ////GetFileLinkFromDataTable(dt_account_dim_files);
         }
 
         private void GetFileLinkFromDataTable(DataTable dt)
@@ -378,6 +436,7 @@ namespace CanvasDataDemo
         {
             var connString = Program.Configuration.GetSection("ConnectionStrings:CanvasDemoDb").Get<string>();
             MyConnection.SetGlobalConnectionString(connString);
+
         }
 
         private void btnCreateTableInDatabase_Click(object sender, EventArgs e)
