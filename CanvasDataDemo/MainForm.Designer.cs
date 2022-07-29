@@ -34,18 +34,19 @@
             this.lblApplicationStatusValue = new System.Windows.Forms.Label();
             this.lblApplicationStatus = new System.Windows.Forms.Label();
             this.tabPageSettings = new System.Windows.Forms.TabPage();
+            this.btnTestConnection = new System.Windows.Forms.Button();
             this.txtSqlConnectionString = new System.Windows.Forms.TextBox();
             this.lblSqlConnectionString = new System.Windows.Forms.Label();
             this.btnSaveSettings = new System.Windows.Forms.Button();
-            this.txtTableSchemaUrl = new System.Windows.Forms.TextBox();
-            this.lblTableSchemaUrl = new System.Windows.Forms.Label();
+            this.txtLatestTableSchemaUrl = new System.Windows.Forms.TextBox();
+            this.lblLatestTableSchemaUrl = new System.Windows.Forms.Label();
             this.txtApiSecret = new System.Windows.Forms.TextBox();
             this.lblApiSecret = new System.Windows.Forms.Label();
             this.txtApiKey = new System.Windows.Forms.TextBox();
             this.lblApiKey = new System.Windows.Forms.Label();
-            this.txtFileLatestSchemaUrl = new System.Windows.Forms.TextBox();
-            this.lblUrl = new System.Windows.Forms.Label();
-            this.btnTestConnection = new System.Windows.Forms.Button();
+            this.txtTableFileUrl = new System.Windows.Forms.TextBox();
+            this.lblTableFileUrl = new System.Windows.Forms.Label();
+            this.btnOpenFolder = new System.Windows.Forms.Button();
             this.tabMain.SuspendLayout();
             this.tabPageMain.SuspendLayout();
             this.tabPageSettings.SuspendLayout();
@@ -61,18 +62,19 @@
             this.tabMain.Location = new System.Drawing.Point(1, 1);
             this.tabMain.Name = "tabMain";
             this.tabMain.SelectedIndex = 0;
-            this.tabMain.Size = new System.Drawing.Size(613, 416);
+            this.tabMain.Size = new System.Drawing.Size(673, 416);
             this.tabMain.TabIndex = 4;
             // 
             // tabPageMain
             // 
+            this.tabPageMain.Controls.Add(this.btnOpenFolder);
             this.tabPageMain.Controls.Add(this.btnRunGetDataJob);
             this.tabPageMain.Controls.Add(this.lblApplicationStatusValue);
             this.tabPageMain.Controls.Add(this.lblApplicationStatus);
             this.tabPageMain.Location = new System.Drawing.Point(4, 24);
             this.tabPageMain.Name = "tabPageMain";
             this.tabPageMain.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageMain.Size = new System.Drawing.Size(605, 388);
+            this.tabPageMain.Size = new System.Drawing.Size(665, 388);
             this.tabPageMain.TabIndex = 0;
             this.tabPageMain.Text = "Main";
             this.tabPageMain.UseVisualStyleBackColor = true;
@@ -111,27 +113,37 @@
             this.tabPageSettings.Controls.Add(this.txtSqlConnectionString);
             this.tabPageSettings.Controls.Add(this.lblSqlConnectionString);
             this.tabPageSettings.Controls.Add(this.btnSaveSettings);
-            this.tabPageSettings.Controls.Add(this.txtTableSchemaUrl);
-            this.tabPageSettings.Controls.Add(this.lblTableSchemaUrl);
+            this.tabPageSettings.Controls.Add(this.txtLatestTableSchemaUrl);
+            this.tabPageSettings.Controls.Add(this.lblLatestTableSchemaUrl);
             this.tabPageSettings.Controls.Add(this.txtApiSecret);
             this.tabPageSettings.Controls.Add(this.lblApiSecret);
             this.tabPageSettings.Controls.Add(this.txtApiKey);
             this.tabPageSettings.Controls.Add(this.lblApiKey);
-            this.tabPageSettings.Controls.Add(this.txtFileLatestSchemaUrl);
-            this.tabPageSettings.Controls.Add(this.lblUrl);
+            this.tabPageSettings.Controls.Add(this.txtTableFileUrl);
+            this.tabPageSettings.Controls.Add(this.lblTableFileUrl);
             this.tabPageSettings.Location = new System.Drawing.Point(4, 24);
             this.tabPageSettings.Name = "tabPageSettings";
             this.tabPageSettings.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageSettings.Size = new System.Drawing.Size(605, 388);
+            this.tabPageSettings.Size = new System.Drawing.Size(665, 388);
             this.tabPageSettings.TabIndex = 1;
             this.tabPageSettings.Text = "Settings";
             this.tabPageSettings.UseVisualStyleBackColor = true;
+            // 
+            // btnTestConnection
+            // 
+            this.btnTestConnection.Location = new System.Drawing.Point(168, 264);
+            this.btnTestConnection.Name = "btnTestConnection";
+            this.btnTestConnection.Size = new System.Drawing.Size(158, 23);
+            this.btnTestConnection.TabIndex = 36;
+            this.btnTestConnection.Text = "Test Connection";
+            this.btnTestConnection.UseVisualStyleBackColor = true;
+            this.btnTestConnection.Click += new System.EventHandler(this.btnTestConnection_Click);
             // 
             // txtSqlConnectionString
             // 
             this.txtSqlConnectionString.Location = new System.Drawing.Point(168, 221);
             this.txtSqlConnectionString.Name = "txtSqlConnectionString";
-            this.txtSqlConnectionString.Size = new System.Drawing.Size(412, 23);
+            this.txtSqlConnectionString.Size = new System.Drawing.Size(450, 23);
             this.txtSqlConnectionString.TabIndex = 35;
             // 
             // lblSqlConnectionString
@@ -153,29 +165,29 @@
             this.btnSaveSettings.UseVisualStyleBackColor = true;
             this.btnSaveSettings.Click += new System.EventHandler(this.btnSaveSettings_Click);
             // 
-            // txtTableSchemaUrl
+            // txtLatestTableSchemaUrl
             // 
-            this.txtTableSchemaUrl.Location = new System.Drawing.Point(168, 170);
-            this.txtTableSchemaUrl.Name = "txtTableSchemaUrl";
-            this.txtTableSchemaUrl.Size = new System.Drawing.Size(412, 23);
-            this.txtTableSchemaUrl.TabIndex = 32;
-            this.txtTableSchemaUrl.Text = "https://portal.inshosteddata.com/api/schema/latest";
+            this.txtLatestTableSchemaUrl.Location = new System.Drawing.Point(168, 170);
+            this.txtLatestTableSchemaUrl.Name = "txtLatestTableSchemaUrl";
+            this.txtLatestTableSchemaUrl.Size = new System.Drawing.Size(450, 23);
+            this.txtLatestTableSchemaUrl.TabIndex = 32;
+            this.txtLatestTableSchemaUrl.Text = "https://portal.inshosteddata.com/api/schema/latest";
             // 
-            // lblTableSchemaUrl
+            // lblLatestTableSchemaUrl
             // 
-            this.lblTableSchemaUrl.AutoSize = true;
-            this.lblTableSchemaUrl.Location = new System.Drawing.Point(24, 173);
-            this.lblTableSchemaUrl.Name = "lblTableSchemaUrl";
-            this.lblTableSchemaUrl.Size = new System.Drawing.Size(97, 15);
-            this.lblTableSchemaUrl.TabIndex = 31;
-            this.lblTableSchemaUrl.Text = "Table Schema Url";
+            this.lblLatestTableSchemaUrl.AutoSize = true;
+            this.lblLatestTableSchemaUrl.Location = new System.Drawing.Point(24, 173);
+            this.lblLatestTableSchemaUrl.Name = "lblLatestTableSchemaUrl";
+            this.lblLatestTableSchemaUrl.Size = new System.Drawing.Size(131, 15);
+            this.lblLatestTableSchemaUrl.TabIndex = 31;
+            this.lblLatestTableSchemaUrl.Text = "Latest Table Schema Url";
             // 
             // txtApiSecret
             // 
             this.txtApiSecret.Location = new System.Drawing.Point(168, 68);
             this.txtApiSecret.Name = "txtApiSecret";
             this.txtApiSecret.PasswordChar = '*';
-            this.txtApiSecret.Size = new System.Drawing.Size(412, 23);
+            this.txtApiSecret.Size = new System.Drawing.Size(450, 23);
             this.txtApiSecret.TabIndex = 30;
             // 
             // lblApiSecret
@@ -192,7 +204,7 @@
             this.txtApiKey.Location = new System.Drawing.Point(168, 22);
             this.txtApiKey.Name = "txtApiKey";
             this.txtApiKey.PasswordChar = '*';
-            this.txtApiKey.Size = new System.Drawing.Size(412, 23);
+            this.txtApiKey.Size = new System.Drawing.Size(450, 23);
             this.txtApiKey.TabIndex = 28;
             // 
             // lblApiKey
@@ -204,38 +216,38 @@
             this.lblApiKey.TabIndex = 27;
             this.lblApiKey.Text = "Api Key";
             // 
-            // txtFileLatestSchemaUrl
+            // txtTableFileUrl
             // 
-            this.txtFileLatestSchemaUrl.Location = new System.Drawing.Point(168, 119);
-            this.txtFileLatestSchemaUrl.Name = "txtFileLatestSchemaUrl";
-            this.txtFileLatestSchemaUrl.Size = new System.Drawing.Size(412, 23);
-            this.txtFileLatestSchemaUrl.TabIndex = 26;
-            this.txtFileLatestSchemaUrl.Text = "https://portal.inshosteddata.com/api/account/self/file/latest";
+            this.txtTableFileUrl.Location = new System.Drawing.Point(168, 119);
+            this.txtTableFileUrl.Name = "txtTableFileUrl";
+            this.txtTableFileUrl.Size = new System.Drawing.Size(450, 23);
+            this.txtTableFileUrl.TabIndex = 26;
+            this.txtTableFileUrl.Text = "https://portal.inshosteddata.com/api/account/self/file/byTable/:tableName";
             // 
-            // lblUrl
+            // lblTableFileUrl
             // 
-            this.lblUrl.AutoSize = true;
-            this.lblUrl.Location = new System.Drawing.Point(24, 122);
-            this.lblUrl.Name = "lblUrl";
-            this.lblUrl.Size = new System.Drawing.Size(122, 15);
-            this.lblUrl.TabIndex = 25;
-            this.lblUrl.Text = "File Latest Schema Url";
+            this.lblTableFileUrl.AutoSize = true;
+            this.lblTableFileUrl.Location = new System.Drawing.Point(24, 122);
+            this.lblTableFileUrl.Name = "lblTableFileUrl";
+            this.lblTableFileUrl.Size = new System.Drawing.Size(73, 15);
+            this.lblTableFileUrl.TabIndex = 25;
+            this.lblTableFileUrl.Text = "Table File Url";
             // 
-            // btnTestConnection
+            // btnOpenFolder
             // 
-            this.btnTestConnection.Location = new System.Drawing.Point(168, 264);
-            this.btnTestConnection.Name = "btnTestConnection";
-            this.btnTestConnection.Size = new System.Drawing.Size(158, 23);
-            this.btnTestConnection.TabIndex = 36;
-            this.btnTestConnection.Text = "Test Connection";
-            this.btnTestConnection.UseVisualStyleBackColor = true;
-            this.btnTestConnection.Click += new System.EventHandler(this.btnTestConnection_Click);
+            this.btnOpenFolder.Location = new System.Drawing.Point(235, 56);
+            this.btnOpenFolder.Name = "btnOpenFolder";
+            this.btnOpenFolder.Size = new System.Drawing.Size(158, 23);
+            this.btnOpenFolder.TabIndex = 7;
+            this.btnOpenFolder.Text = "Open File Data Folder";
+            this.btnOpenFolder.UseVisualStyleBackColor = true;
+            this.btnOpenFolder.Click += new System.EventHandler(this.btnOpenFolder_Click);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(613, 416);
+            this.ClientSize = new System.Drawing.Size(673, 416);
             this.Controls.Add(this.tabMain);
             this.Name = "MainForm";
             this.Text = "MainForm";
@@ -253,14 +265,14 @@
         private System.Windows.Forms.TabControl tabMain;
         private System.Windows.Forms.TabPage tabPageMain;
         private System.Windows.Forms.TabPage tabPageSettings;
-        private System.Windows.Forms.TextBox txtTableSchemaUrl;
-        private System.Windows.Forms.Label lblTableSchemaUrl;
+        private System.Windows.Forms.TextBox txtLatestTableSchemaUrl;
+        private System.Windows.Forms.Label lblLatestTableSchemaUrl;
         private System.Windows.Forms.TextBox txtApiSecret;
         private System.Windows.Forms.Label lblApiSecret;
         private System.Windows.Forms.TextBox txtApiKey;
         private System.Windows.Forms.Label lblApiKey;
-        private System.Windows.Forms.TextBox txtFileLatestSchemaUrl;
-        private System.Windows.Forms.Label lblUrl;
+        private System.Windows.Forms.TextBox txtTableFileUrl;
+        private System.Windows.Forms.Label lblTableFileUrl;
         private System.Windows.Forms.Button btnRunGetDataJob;
         private System.Windows.Forms.Label lblApplicationStatusValue;
         private System.Windows.Forms.Label lblApplicationStatus;
@@ -268,5 +280,6 @@
         private System.Windows.Forms.TextBox txtSqlConnectionString;
         private System.Windows.Forms.Label lblSqlConnectionString;
         private System.Windows.Forms.Button btnTestConnection;
+        private System.Windows.Forms.Button btnOpenFolder;
     }
 }

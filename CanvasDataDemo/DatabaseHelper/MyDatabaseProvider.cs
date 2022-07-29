@@ -18,7 +18,7 @@ namespace CanvasDataDemo.DatabaseHelper
         {
             if (string.IsNullOrEmpty(connectionString))
             {
-                _connectionString = MyConnection.GlobalConnectionString;
+                _connectionString = MyConnection.GetGlobalConnectionString();
             }
             else
             {

@@ -14,9 +14,9 @@ namespace CanvasDataDemo.Views
 
         string? ApiSecret { get; set; }
 
-        string? FileLatestSchemaUrl { get; set; }
+        string? TableFileUrl { get; set; }
 
-        string? TableSchemaUrl { get; set; }
+        string? LatestTableSchemaUrl { get; set; }
 
     }
 }

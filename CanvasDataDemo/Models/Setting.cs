@@ -14,8 +14,8 @@ namespace CanvasDataDemo.Models
 
         public string? ApiSecret { get; set; }
 
-        public string? FileLatestSchemaUrl { get; set; }
+        public string? TableFileUrl { get; set; }
 
-        public string? TableSchemaUrl { get; set; }
+        public string? LatestTableSchemaUrl { get; set; }
     }
 }

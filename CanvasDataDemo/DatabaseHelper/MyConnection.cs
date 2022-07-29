@@ -10,11 +10,16 @@ namespace CanvasDataDemo.DatabaseHelper
     {
         public const int DEFAULT_QUERY_TIMEOUT_IN_SECOND = 30;
 
-        public static string GlobalConnectionString = "";
+        private static string GlobalConnectionString = "";
 
         public static void SetGlobalConnectionString(string connectionString)
         {
             GlobalConnectionString = connectionString;
+        }
+
+        public static string GetGlobalConnectionString()
+        {
+            return GlobalConnectionString;
         }
     }
 }

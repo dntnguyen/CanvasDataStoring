@@ -63,52 +63,52 @@ namespace CanvasDataDemo
             rtbDataFromApi.Text = content;
         }
 
-        private IEnumerable<TableLatestFileSchema> LoopJsonToFileList()
+        private IEnumerable<TableFile> LoopJsonToFileList()
         {
-            var listFileLatestSchema = new List<TableLatestFileSchema>();
+            var listFileLatestSchema = new List<TableFile>();
 
-            string json = rtbDataFromApi.Text;
+            ////string json = rtbDataFromApi.Text;
 
-            using var doc = JsonDocument.Parse(json);
-            JsonElement root = doc.RootElement;
+            ////using var doc = JsonDocument.Parse(json);
+            ////JsonElement root = doc.RootElement;
 
-            if (root.TryGetProperty("artifactsByTable", out JsonElement artifactsByTable))
-            {
-                var artifactsByTableProps = artifactsByTable.EnumerateObject();
-                while (artifactsByTableProps.MoveNext())
-                {
-                    var artiProp = artifactsByTableProps.Current;
-                    var artiName = artiProp.Name;
-                    var artiValue = artiProp.Value;
+            ////if (root.TryGetProperty("artifactsByTable", out JsonElement artifactsByTable))
+            ////{
+            ////    var artifactsByTableProps = artifactsByTable.EnumerateObject();
+            ////    while (artifactsByTableProps.MoveNext())
+            ////    {
+            ////        var artiProp = artifactsByTableProps.Current;
+            ////        var artiName = artiProp.Name;
+            ////        var artiValue = artiProp.Value;
 
-                    var fileLatestSchema = new TableLatestFileSchema();
-                    fileLatestSchema.TableName = artiName;
+            ////        var fileLatestSchema = new TableFile();
+            ////        fileLatestSchema.TableName = artiName;
 
-                    if (artiValue.TryGetProperty("files", out JsonElement files))
-                    {
-                        var FileArraysEle = files.EnumerateArray();
-                        while (FileArraysEle.MoveNext())
-                        {
-                            var fileObjectEle = FileArraysEle.Current;
+            ////        if (artiValue.TryGetProperty("files", out JsonElement files))
+            ////        {
+            ////            var FileArraysEle = files.EnumerateArray();
+            ////            while (FileArraysEle.MoveNext())
+            ////            {
+            ////                var fileObjectEle = FileArraysEle.Current;
 
 
-                            if (fileObjectEle.TryGetProperty("url", out JsonElement url))
-                            {
-                                fileLatestSchema.LatestFileInfo.Url = url.GetString();
-                            }
+            ////                if (fileObjectEle.TryGetProperty("url", out JsonElement url))
+            ////                {
+            ////                    fileLatestSchema.LatestFileInfo.Url = url.GetString();
+            ////                }
 
-                            if (fileObjectEle.TryGetProperty("filename", out JsonElement fileName))
-                            {
-                                fileLatestSchema.LatestFileInfo.FileName = fileName.GetString();
-                            }
-                            // loop 1 lần
-                            break;
-                        }
-                    }
+            ////                if (fileObjectEle.TryGetProperty("filename", out JsonElement fileName))
+            ////                {
+            ////                    fileLatestSchema.LatestFileInfo.FileName = fileName.GetString();
+            ////                }
+            ////                // loop 1 lần
+            ////                break;
+            ////            }
+            ////        }
 
-                    listFileLatestSchema.Add(fileLatestSchema);
-                }
-            }
+            ////        listFileLatestSchema.Add(fileLatestSchema);
+            ////    }
+            ////}
 
             return listFileLatestSchema;
         }
@@ -470,7 +470,7 @@ namespace CanvasDataDemo
             var timestamp = DateTime.Now;
             var tableName = txtGetTableName.Text;
 
-            var url = $"https://portal.inshosteddata.com/api/account/self/file/byTable/{tableName}";
+            var url = $"https://portal.inshosteddata.com/api/account/self/file/byTable/:tableName";
 
             var request = GetWebRequest(apiKey, apiSecret, timestamp, url);
             WebResponse response = request.GetResponse();
