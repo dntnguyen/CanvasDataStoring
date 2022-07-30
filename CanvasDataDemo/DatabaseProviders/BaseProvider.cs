@@ -85,15 +85,22 @@ namespace CanvasDataDemo.DatabaseProviders
             string sqlUpdateTableSync = "";
             sqlUpdateTableSync += $" IF NOT EXISTS(SELECT 1 FROM dbo.TableSync WHERE TableName = @TableName) " + Environment.NewLine;
             sqlUpdateTableSync += " BEGIN " + Environment.NewLine;
-            sqlUpdateTableSync += $"     INSERT INTO dbo.TableSync (TableName) VALUES (@TableName) " + Environment.NewLine;
+            sqlUpdateTableSync += $"     INSERT INTO dbo.TableSync (TableName, CreationTime) VALUES (@TableName, GETDATE()) " + Environment.NewLine;
             sqlUpdateTableSync += " END " + Environment.NewLine;
 
             return sqlUpdateTableSync;
         }
 
-        protected virtual void InsertDataToTable(string tableName, int sequence, DataTable dtData)
+        public virtual ResponseResult InsertDataToTable(TableSchema tableSchema, TableFileHistory tableFileHistory, DataTable dtData)
         {
+            var res = new ResponseResult();
+            res.ResultCode = ResponseResultCode.NoResult;
+            res.ResultDescription = "No Result";
+
             //Create Table And Columns
+            var tableName = tableSchema.TableName;
+            var sequence = tableFileHistory.Sequence;
+
             var createTableColumnParameters = new DynamicParameters();
             createTableColumnParameters.Add("@TableName", this.ReplaceSpecialTextInDatabase(tableName));
 
@@ -111,9 +118,17 @@ namespace CanvasDataDemo.DatabaseProviders
             string sqlScriptCreateTable = " IF NOT EXISTS(SELECT* FROM sysobjects WHERE name= '" + ReplaceSpecialTextInDatabase(tableName) + "' and xtype = 'U') " +
                 " CREATE TABLE " + ReplaceSpecialTextInDatabase(tableName) + "(" +
                         columnGenerateScript +
-
-                        " ) "
+                        " ) " + Environment.NewLine
                 ;
+
+
+            string sqlScriptDeleteTableDataIfNotPartial = "";
+            if (tableFileHistory.Partial == false)
+            {
+                sqlScriptDeleteTableDataIfNotPartial = $" DELETE FROM {ReplaceSpecialTextInDatabase(tableName)} WHERE 2 = 2 ";
+            }
+
+            sqlScriptCreateTable += sqlScriptDeleteTableDataIfNotPartial;
 
             // Generate Column Insert Data
             string columnsScriptForInsert = "";
@@ -137,7 +152,8 @@ namespace CanvasDataDemo.DatabaseProviders
                 sqlConnection.Execute(sql: sqlScriptCreateTable,
                         param: createTableColumnParameters,
                         commandType: CommandType.Text,
-                        commandTimeout: pDefaultQueryTimeoutInSecond
+                        commandTimeout: pDefaultQueryTimeoutInSecond,
+                        transaction: transaction
                     );
 
                 // Generate Data Values To Insert
@@ -175,7 +191,8 @@ namespace CanvasDataDemo.DatabaseProviders
                     sqlConnection.Execute(sql: insertScript,
                         param: insertParameters,
                         commandType: CommandType.Text,
-                        commandTimeout: pDefaultQueryTimeoutInSecond
+                        commandTimeout: pDefaultQueryTimeoutInSecond,
+                        transaction: transaction
                     );
                 }
 
@@ -184,8 +201,8 @@ namespace CanvasDataDemo.DatabaseProviders
 
                 string sqlUpdateTableSync = "";
                 sqlUpdateTableSync += this.GetSqlQuery_CreateTableInTableSyncIfNotExists();
-                sqlUpdateTableSync += $" UPDATE dbo.TableSync SET Sequence = {paramSequence} WHERE TableName = {paramTableName} " + Environment.NewLine;
-                sqlUpdateTableSync += " GO " + Environment.NewLine;
+                sqlUpdateTableSync += $" UPDATE dbo.TableSync SET LatestSequence = {paramSequence}, LastModificationTime = GETDATE() WHERE TableName = {paramTableName} " + Environment.NewLine;
+                //sqlUpdateTableSync += " GO " + Environment.NewLine;
 
                 var tableSyncParams = new DynamicParameters();
                 tableSyncParams.Add(paramTableName, tableName);
@@ -194,11 +211,15 @@ namespace CanvasDataDemo.DatabaseProviders
                 sqlConnection.Execute(sql: sqlUpdateTableSync,
                         param: tableSyncParams,
                         commandType: CommandType.Text,
-                        commandTimeout: pDefaultQueryTimeoutInSecond
+                        commandTimeout: pDefaultQueryTimeoutInSecond,
+                        transaction: transaction
                     );
 
                 // Attempt to commit the transaction.
                 transaction.Commit();
+
+                res.ResultCode = ResponseResultCode.Ok;
+                res.ResultDescription = "Succeeded";
             }
             catch (Exception ex)
             {
@@ -215,7 +236,29 @@ namespace CanvasDataDemo.DatabaseProviders
                     // on the server that would cause the rollback to fail, such as
                     // a closed connection.
                 }
+
+                res.ResultCode = ResponseResultCode.Fail;
+                res.ResultDescription = $"Error: {ex.Message}";
             }
+            finally
+            {
+                if (transaction != null)
+                {
+                    transaction.Dispose();
+                }
+
+                if (sqlConnection != null)
+                {
+                    if (sqlConnection.State == ConnectionState.Open)
+                    {
+                        sqlConnection.Close();
+                    }
+
+                    sqlConnection.Dispose();
+                }
+            }
+
+            return res;
         }
     }
 }

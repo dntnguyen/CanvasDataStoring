@@ -1,6 +1,3 @@
-USE [CanvasDataDb]
-GO
-
 /****** Object:  Table [dbo].[TableSync]    Script Date: 7/29/2022 1:37:26 PM ******/
 SET ANSI_NULLS ON
 GO

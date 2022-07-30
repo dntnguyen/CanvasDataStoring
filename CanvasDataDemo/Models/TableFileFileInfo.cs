@@ -11,5 +11,10 @@ namespace CanvasDataDemo.Models
         public string? Url { get; set; }
 
         public string? FileName { get; set; }
+
+        public bool IsCannotDownload()
+        {
+            return string.IsNullOrEmpty(Url) || string.IsNullOrEmpty(FileName);
+        }
     }
 }

@@ -7,6 +7,7 @@ using CanvasDataDemo.Models;
 using CanvasDataDemo.Utilities;
 using CanvasDataDemo.Views;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -36,15 +37,24 @@ namespace CanvasDataDemo
 
         public string? LatestTableSchemaUrl { get => txtLatestTableSchemaUrl.Text; set => txtLatestTableSchemaUrl.Text = value; }
 
+        private readonly ILogger<MainForm> _logger;
         private readonly ISettingHelper _settingHelper;
         private readonly ICanvasDataApiHelper _canvasDataApiHelper;
         private readonly string _fileDataFolderName = "FileData";
 
-        public MainForm(ISettingHelper settingHelper, ICanvasDataApiHelper canvasDataApiHelper)
+        private BaseProvider _databaseProvider = null;
+        private BackgroundWorker _bgwGetDataJob = new BackgroundWorker();
+
+        public MainForm(
+            ILogger<MainForm> logger,
+            ISettingHelper settingHelper,
+            ICanvasDataApiHelper canvasDataApiHelper)
         {
+            this._logger = logger;
             this._settingHelper = settingHelper;
             this._canvasDataApiHelper = canvasDataApiHelper;
             InitializeComponent();
+            InitializeBackgroundWorker();
         }
 
         private Setting GetSetting()
@@ -73,58 +83,199 @@ namespace CanvasDataDemo
             LatestTableSchemaUrl = setting.LatestTableSchemaUrl;
 
             MyConnection.SetGlobalConnectionString(SqlConnectionString);
-
-            if (string.IsNullOrEmpty(SqlConnectionString))
-            {
-                return;
-            }
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
             LoadSettingFromFile();
+            this._logger.LogInformation("Load Setting From File");
         }
         private void btnTestConnection_Click(object sender, EventArgs e)
+        {
+            TestConnection();
+        }
+
+        private bool TestConnection(bool isShowMessagae = true)
         {
             string sqlConnectionString = txtSqlConnectionString.Text;
             if (string.IsNullOrWhiteSpace(sqlConnectionString))
             {
-                MessageBox.Show("Please input connection string");
+                if (isShowMessagae)
+                {
+                    MessageBox.Show("Please input connection string");
+                }
+                return false;
             }
 
             var testConnectionErrorDescription = MyDatabaseHelper.TestConnection(sqlConnectionString);
 
             if (string.IsNullOrEmpty(testConnectionErrorDescription))
             {
-                MessageBox.Show("Success");
+                if (isShowMessagae)
+                {
+                    MessageBox.Show("Success");
+                }
+                return true;
             }
             else
             {
-                MessageBox.Show($"Failed to connection to database: {testConnectionErrorDescription}");
+                if (isShowMessagae)
+                {
+                    MessageBox.Show($"Failed to connection to database: {testConnectionErrorDescription}");
+                }
+                return false;
             }
+        }
+
+        private void InitializeBackgroundWorker()
+        {
+            _bgwGetDataJob.WorkerReportsProgress = true;
+            _bgwGetDataJob.WorkerSupportsCancellation = true;
+            _bgwGetDataJob.DoWork +=
+                new DoWorkEventHandler(bgwGetDataJob_DoWork);
+            _bgwGetDataJob.RunWorkerCompleted +=
+                new RunWorkerCompletedEventHandler(
+            bgwGetDataJob_RunWorkerCompleted);
+            _bgwGetDataJob.ProgressChanged +=
+                new ProgressChangedEventHandler(
+            bgwGetDataJob_ProgressChanged);
+        }
+
+        private void InvokeWriteNotes(string message, bool isClear = false)
+        {
+            if (isClear)
+            {
+                rtbJobNotes.Invoke((MethodInvoker)(() => rtbJobNotes.Text = ""));
+                return;
+            }
+
+            DateTime nun = DateTime.Now;
+            var nunText = nun.ToString("yyyy-MM-dd HH:mm:ss fff");
+            rtbJobNotes.Invoke((MethodInvoker)(() => rtbJobNotes.Text += nunText + "\t" + message + "\n"));
         }
 
         private void btnSaveSettings_Click(object sender, EventArgs e)
         {
             this._settingHelper.WriteSettingToFile(GetSetting());
+            MyConnection.SetGlobalConnectionString(SqlConnectionString);
+        }
+
+        private bool InitConnectionBeforeRunGetDataJob()
+        {
+            MyConnection.SetGlobalConnectionString(SqlConnectionString);
+            if (TestConnection(false))
+            {
+                _databaseProvider = new BaseProvider();
+                return true;
+            }
+            else
+            {
+                MessageBox.Show("Connection is not available");
+                return false;
+            }
         }
 
         private void btnRunGetDataJob_Click(object sender, EventArgs e)
         {
+            if (InitConnectionBeforeRunGetDataJob() == false)
+            {
+                return;
+            }
+
+            _bgwGetDataJob.RunWorkerAsync();
+        }
+
+
+        private void btnGetSpecificTableData_Click(object sender, EventArgs e)
+        {
+            if (InitConnectionBeforeRunGetDataJob() == false)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtGetSpecificTableData.Text))
+            {
+                MessageBox.Show("Please input table name");
+                return;
+            }
+
+            _bgwGetDataJob.RunWorkerAsync(txtGetSpecificTableData.Text.Trim());
+        }
+
+        private void GetDataJob(DoWorkEventArgs e, string tableName = "")
+        {
+            InvokeWriteNotes("", true);
+            var logText = "Start To Get Data";
+            _logger.LogInformation(logText);
+            InvokeWriteNotes(logText);
             IEnumerable<TableSchema> listLatestTableSchema =
                 this._canvasDataApiHelper.GetLatestTableSchema(ApiKey, ApiSecret, LatestTableSchemaUrl);
+
+            if (listLatestTableSchema == null || listLatestTableSchema.Count() <= 0)
+            {
+                logText = "No Table To Get Data";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText);
+                return;
+            }
+
+            var count = 0;
             foreach (var tableSchema in listLatestTableSchema)
             {
-                if (tableSchema.TableName != "account_dim")
+                if (_bgwGetDataJob.CancellationPending == true)
                 {
-                    continue;
+                    e.Cancel = true;
+                    return;
                 }
 
-                var tableFile = GetTableFile(tableSchema);
+                if (string.IsNullOrEmpty(tableName) || tableSchema.TableName == tableName)
+                {
+                    GetDataJobFromTable(tableSchema);
+                    count++;
+                }
+            }
+            var tableCount = string.IsNullOrEmpty(tableName) ? listLatestTableSchema.Count() : 1;
+            logText = $"Finish To Get Table Data. Total:{count}/{tableCount}";
+            _logger.LogInformation(logText);
+            InvokeWriteNotes(logText);
+        }
+
+        private void GetDataJobFromTable(TableSchema tableSchema)
+        {
+            TableFileHistory tableFileHistory = GetTableFileAndDownloadToDataFolder(tableSchema);
+
+            if (tableFileHistory == null || tableFileHistory.FileInfo == null || tableFileHistory.FileInfo.IsCannotDownload())
+            {
+                return;
+            }
+
+            var logText = $"Begin to process table: {tableSchema.TableName}, sequence: {tableFileHistory.Sequence}";
+            _logger.LogInformation(logText);
+            InvokeWriteNotes(logText);
+
+            string decompressedFileNameFullPath = DownloadFileToFileDataFolder(tableFileHistory.FileInfo);
+
+            string writeFilePath = GetFullPathFolderFileData() + tableSchema.TableName + ".json";
+
+            DataTable dtData = MappingDataRawWithSchemaToDataTable(decompressedFileNameFullPath, tableSchema, writeFilePath);
+
+
+            var response = _databaseProvider.InsertDataToTable(tableSchema, tableFileHistory, dtData);
+            if (response.ResultCode == ResponseResultCode.Ok)
+            {
+                logText = $"Sucessfully process table: {tableSchema.TableName}, sequence: {tableFileHistory.Sequence}";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText);
+            }
+            else
+            {
+                logText = $"Fail to process table: {tableSchema.TableName}, sequence: {tableFileHistory.Sequence}. Result: {response.ResultDescription}";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText);
             }
         }
 
-        private TableFile GetTableFile(TableSchema tableSchema)
+        private TableFileHistory GetTableFileAndDownloadToDataFolder(TableSchema tableSchema)
         {
             var tableFile = this._canvasDataApiHelper.GetTableFile(ApiKey, ApiSecret, TableFileUrl, tableSchema.TableName);
 
@@ -142,40 +293,36 @@ namespace CanvasDataDemo
                 maxSequenceOfTableFile = tableFile.ListHistory.Max(x => x.Sequence);
                 if (tableSync.LatestSequence is null || tableSync.LatestSequence <= 0 || tableSync.LatestSequence < maxSequenceOfTableFile)
                 {
-                    var tableFileHistory = tableFile.ListHistory.FirstOrDefault(x => x.Sequence == maxSequenceOfTableFile);
-
-                    var downloadFileName = tableFileHistory.FileInfo?.FileName;
-                    var downloadUrl = tableFileHistory.FileInfo?.Url;
-
-                    DownloadFileToFileDataFolder(downloadUrl, downloadFileName, tableSchema);
+                    return tableFile.ListHistory.FirstOrDefault(x => x.Sequence == maxSequenceOfTableFile);
                 }
             }
 
 
-            return tableFile;
+            return null;
         }
 
-        private void DownloadFileToFileDataFolder(string downloadUrl, string downloadFileName, TableSchema tableSchema)
+        private string GetFullPathFolderFileData()
         {
-            var fullPathFolder = Directory.GetCurrentDirectory() + "\\" + _fileDataFolderName;
+            return Directory.GetCurrentDirectory() + "\\" + _fileDataFolderName + "\\";
+        }
+
+        private string DownloadFileToFileDataFolder(TableFileFileInfo tableFileFileInfo)
+        {
+            var fullPathFolder = GetFullPathFolderFileData();
+
+            var downloadUrl = tableFileFileInfo.Url;
+            var downloadFileName = tableFileFileInfo.FileName;
 
             Directory.CreateDirectory(fullPathFolder);
 
             using (var mywebClient = new WebClient())
             {
-                mywebClient.DownloadFile(downloadUrl, fullPathFolder + "\\" + downloadFileName);
+                mywebClient.DownloadFile(downloadUrl, fullPathFolder + downloadFileName);
             }
 
             string decompressedFileNameFullPath = DecompressDownloadedFile(downloadFileName);
 
-            if (string.IsNullOrEmpty(decompressedFileNameFullPath))
-            {
-                return;
-            }
-
-            string writeFilePath = fullPathFolder + "\\" + tableSchema.TableName + ".json";
-
-            MappingDataRawWithSchemaToDataTable(decompressedFileNameFullPath, tableSchema, writeFilePath);
+            return decompressedFileNameFullPath;
         }
 
         private string DecompressDownloadedFile(string downloadedFileName)
@@ -221,7 +368,7 @@ namespace CanvasDataDemo
             string rawFilePath, TableSchema tableSchema, string writeFilePath)
         {
             var dtDestination = CreateDataTableFromCanvasTableSchema(tableSchema);
-            
+
             foreach (string line in File.ReadLines(rawFilePath))
             {
                 DataRow row = dtDestination.NewRow();
@@ -266,23 +413,22 @@ namespace CanvasDataDemo
                 col.AllowDBNull = true;
                 col.ColumnName = schemaColumn.Name;
 
-
-                if (schemaColumn.Type == "bigint" || schemaColumn.Type == "int")
-                {
-                    col.DataType = typeof(long);
-                }
-                else if (schemaColumn.Type == "double precision")
-                {
-                    col.DataType = typeof(double);
-                }
-                else if (schemaColumn.Type == "boolean")
-                {
-                    col.DataType = typeof(bool);
-                }
-                else if (schemaColumn.Type == "datetime")
-                {
-                    col.DataType = typeof(DateTime);
-                }
+                ////if (schemaColumn.Type == "bigint" || schemaColumn.Type == "int")
+                ////{
+                ////    col.DataType = typeof(long);
+                ////}
+                ////else if (schemaColumn.Type == "double precision")
+                ////{
+                ////    col.DataType = typeof(double);
+                ////}
+                ////else if (schemaColumn.Type == "boolean")
+                ////{
+                ////    col.DataType = typeof(bool);
+                ////}
+                ////else if (schemaColumn.Type == "datetime")
+                ////{
+                ////    col.DataType = typeof(DateTime);
+                ////}
                 dt.Columns.Add(col);
             }
 
@@ -302,5 +448,64 @@ namespace CanvasDataDemo
 
             }
         }
+
+        private void btnOpenForm1_Click(object sender, EventArgs e)
+        {
+            var form1 = new Form1();
+            form1.APIKey = ApiKey;
+            form1.APISecret = ApiSecret;
+            form1.Show(this);
+        }
+
+        private void bgwGetDataJob_DoWork(object sender,
+            DoWorkEventArgs e)
+        {
+            lblApplicationStatusValue.Invoke((MethodInvoker)(() => lblApplicationStatusValue.Text = ApplicationStatuses.SyncingData));
+
+            string tableName = e.Argument as string;
+            GetDataJob(e, tableName);
+        }
+
+        private void bgwGetDataJob_RunWorkerCompleted(
+            object sender, RunWorkerCompletedEventArgs e)
+        {
+
+            if (e.Error != null)
+            {
+                lblApplicationStatusValue.Text = ApplicationStatuses.SyncEndedWithError;
+            }
+            else if (e.Cancelled)
+            {
+                lblApplicationStatusValue.Text = ApplicationStatuses.SyncCancelled;
+            }
+            else
+            {
+                lblApplicationStatusValue.Text = ApplicationStatuses.None;
+            }
+
+        }
+
+        private void bgwGetDataJob_ProgressChanged(object sender,
+            ProgressChangedEventArgs e)
+        {
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+        }
+
+        private void btnStopGetDataJob_Click(object sender, EventArgs e)
+        {
+            if (_bgwGetDataJob.IsBusy)
+            {
+                _bgwGetDataJob.CancelAsync();
+            }
+        }
+
     }
 }

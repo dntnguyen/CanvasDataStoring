@@ -30,10 +30,13 @@
         {
             this.tabMain = new System.Windows.Forms.TabControl();
             this.tabPageMain = new System.Windows.Forms.TabPage();
+            this.rtbJobNotes = new System.Windows.Forms.RichTextBox();
+            this.btnStopGetDataJob = new System.Windows.Forms.Button();
             this.btnRunGetDataJob = new System.Windows.Forms.Button();
             this.lblApplicationStatusValue = new System.Windows.Forms.Label();
             this.lblApplicationStatus = new System.Windows.Forms.Label();
             this.tabPageSettings = new System.Windows.Forms.TabPage();
+            this.btnOpenForm1 = new System.Windows.Forms.Button();
             this.btnTestConnection = new System.Windows.Forms.Button();
             this.txtSqlConnectionString = new System.Windows.Forms.TextBox();
             this.lblSqlConnectionString = new System.Windows.Forms.Label();
@@ -46,7 +49,9 @@
             this.lblApiKey = new System.Windows.Forms.Label();
             this.txtTableFileUrl = new System.Windows.Forms.TextBox();
             this.lblTableFileUrl = new System.Windows.Forms.Label();
-            this.btnOpenFolder = new System.Windows.Forms.Button();
+            this.btnGetSpecificTableData = new System.Windows.Forms.Button();
+            this.lblGetSpecificTableData = new System.Windows.Forms.Label();
+            this.txtGetSpecificTableData = new System.Windows.Forms.TextBox();
             this.tabMain.SuspendLayout();
             this.tabPageMain.SuspendLayout();
             this.tabPageSettings.SuspendLayout();
@@ -62,26 +67,52 @@
             this.tabMain.Location = new System.Drawing.Point(1, 1);
             this.tabMain.Name = "tabMain";
             this.tabMain.SelectedIndex = 0;
-            this.tabMain.Size = new System.Drawing.Size(673, 416);
+            this.tabMain.Size = new System.Drawing.Size(609, 464);
             this.tabMain.TabIndex = 4;
             // 
             // tabPageMain
             // 
-            this.tabPageMain.Controls.Add(this.btnOpenFolder);
+            this.tabPageMain.Controls.Add(this.txtGetSpecificTableData);
+            this.tabPageMain.Controls.Add(this.lblGetSpecificTableData);
+            this.tabPageMain.Controls.Add(this.btnGetSpecificTableData);
+            this.tabPageMain.Controls.Add(this.rtbJobNotes);
+            this.tabPageMain.Controls.Add(this.btnStopGetDataJob);
             this.tabPageMain.Controls.Add(this.btnRunGetDataJob);
             this.tabPageMain.Controls.Add(this.lblApplicationStatusValue);
             this.tabPageMain.Controls.Add(this.lblApplicationStatus);
             this.tabPageMain.Location = new System.Drawing.Point(4, 24);
             this.tabPageMain.Name = "tabPageMain";
             this.tabPageMain.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageMain.Size = new System.Drawing.Size(665, 388);
+            this.tabPageMain.Size = new System.Drawing.Size(601, 436);
             this.tabPageMain.TabIndex = 0;
             this.tabPageMain.Text = "Main";
             this.tabPageMain.UseVisualStyleBackColor = true;
             // 
+            // rtbJobNotes
+            // 
+            this.rtbJobNotes.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.rtbJobNotes.Location = new System.Drawing.Point(22, 138);
+            this.rtbJobNotes.Name = "rtbJobNotes";
+            this.rtbJobNotes.Size = new System.Drawing.Size(561, 292);
+            this.rtbJobNotes.TabIndex = 39;
+            this.rtbJobNotes.Text = "";
+            // 
+            // btnStopGetDataJob
+            // 
+            this.btnStopGetDataJob.Enabled = false;
+            this.btnStopGetDataJob.Location = new System.Drawing.Point(391, 96);
+            this.btnStopGetDataJob.Name = "btnStopGetDataJob";
+            this.btnStopGetDataJob.Size = new System.Drawing.Size(158, 23);
+            this.btnStopGetDataJob.TabIndex = 38;
+            this.btnStopGetDataJob.Text = "Stop Get Data Job";
+            this.btnStopGetDataJob.UseVisualStyleBackColor = true;
+            this.btnStopGetDataJob.Click += new System.EventHandler(this.btnStopGetDataJob_Click);
+            // 
             // btnRunGetDataJob
             // 
-            this.btnRunGetDataJob.Location = new System.Drawing.Point(19, 56);
+            this.btnRunGetDataJob.Location = new System.Drawing.Point(391, 15);
             this.btnRunGetDataJob.Name = "btnRunGetDataJob";
             this.btnRunGetDataJob.Size = new System.Drawing.Size(158, 23);
             this.btnRunGetDataJob.TabIndex = 6;
@@ -109,6 +140,7 @@
             // 
             // tabPageSettings
             // 
+            this.tabPageSettings.Controls.Add(this.btnOpenForm1);
             this.tabPageSettings.Controls.Add(this.btnTestConnection);
             this.tabPageSettings.Controls.Add(this.txtSqlConnectionString);
             this.tabPageSettings.Controls.Add(this.lblSqlConnectionString);
@@ -124,10 +156,20 @@
             this.tabPageSettings.Location = new System.Drawing.Point(4, 24);
             this.tabPageSettings.Name = "tabPageSettings";
             this.tabPageSettings.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageSettings.Size = new System.Drawing.Size(665, 388);
+            this.tabPageSettings.Size = new System.Drawing.Size(601, 436);
             this.tabPageSettings.TabIndex = 1;
             this.tabPageSettings.Text = "Settings";
             this.tabPageSettings.UseVisualStyleBackColor = true;
+            // 
+            // btnOpenForm1
+            // 
+            this.btnOpenForm1.Location = new System.Drawing.Point(168, 324);
+            this.btnOpenForm1.Name = "btnOpenForm1";
+            this.btnOpenForm1.Size = new System.Drawing.Size(158, 23);
+            this.btnOpenForm1.TabIndex = 37;
+            this.btnOpenForm1.Text = "Open Form1";
+            this.btnOpenForm1.UseVisualStyleBackColor = true;
+            this.btnOpenForm1.Click += new System.EventHandler(this.btnOpenForm1_Click);
             // 
             // btnTestConnection
             // 
@@ -233,21 +275,37 @@
             this.lblTableFileUrl.TabIndex = 25;
             this.lblTableFileUrl.Text = "Table File Url";
             // 
-            // btnOpenFolder
+            // btnGetSpecificTableData
             // 
-            this.btnOpenFolder.Location = new System.Drawing.Point(235, 56);
-            this.btnOpenFolder.Name = "btnOpenFolder";
-            this.btnOpenFolder.Size = new System.Drawing.Size(158, 23);
-            this.btnOpenFolder.TabIndex = 7;
-            this.btnOpenFolder.Text = "Open File Data Folder";
-            this.btnOpenFolder.UseVisualStyleBackColor = true;
-            this.btnOpenFolder.Click += new System.EventHandler(this.btnOpenFolder_Click);
+            this.btnGetSpecificTableData.Location = new System.Drawing.Point(391, 47);
+            this.btnGetSpecificTableData.Name = "btnGetSpecificTableData";
+            this.btnGetSpecificTableData.Size = new System.Drawing.Size(158, 23);
+            this.btnGetSpecificTableData.TabIndex = 40;
+            this.btnGetSpecificTableData.Text = "Get Specific Table Data";
+            this.btnGetSpecificTableData.UseVisualStyleBackColor = true;
+            this.btnGetSpecificTableData.Click += new System.EventHandler(this.btnGetSpecificTableData_Click);
+            // 
+            // lblGetSpecificTableData
+            // 
+            this.lblGetSpecificTableData.AutoSize = true;
+            this.lblGetSpecificTableData.Location = new System.Drawing.Point(141, 51);
+            this.lblGetSpecificTableData.Name = "lblGetSpecificTableData";
+            this.lblGetSpecificTableData.Size = new System.Drawing.Size(126, 15);
+            this.lblGetSpecificTableData.TabIndex = 41;
+            this.lblGetSpecificTableData.Text = "Get Specific Table Data";
+            // 
+            // txtGetSpecificTableData
+            // 
+            this.txtGetSpecificTableData.Location = new System.Drawing.Point(273, 48);
+            this.txtGetSpecificTableData.Name = "txtGetSpecificTableData";
+            this.txtGetSpecificTableData.Size = new System.Drawing.Size(100, 23);
+            this.txtGetSpecificTableData.TabIndex = 42;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(673, 416);
+            this.ClientSize = new System.Drawing.Size(609, 464);
             this.Controls.Add(this.tabMain);
             this.Name = "MainForm";
             this.Text = "MainForm";
@@ -280,6 +338,11 @@
         private System.Windows.Forms.TextBox txtSqlConnectionString;
         private System.Windows.Forms.Label lblSqlConnectionString;
         private System.Windows.Forms.Button btnTestConnection;
-        private System.Windows.Forms.Button btnOpenFolder;
+        private System.Windows.Forms.Button btnOpenForm1;
+        private System.Windows.Forms.Button btnStopGetDataJob;
+        private System.Windows.Forms.RichTextBox rtbJobNotes;
+        private System.Windows.Forms.TextBox txtGetSpecificTableData;
+        private System.Windows.Forms.Label lblGetSpecificTableData;
+        private System.Windows.Forms.Button btnGetSpecificTableData;
     }
 }

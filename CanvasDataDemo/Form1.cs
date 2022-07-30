@@ -30,6 +30,9 @@ namespace CanvasDataDemo
 
         private Dictionary<string, DataTable> _dicTableData = new Dictionary<string, DataTable>();
 
+        public string APIKey = "";
+        public string APISecret = "";
+
         public Form1()
         {
             InitializeComponent();
@@ -433,6 +436,14 @@ namespace CanvasDataDemo
             var connString = Program.Configuration.GetSection("ConnectionStrings:CanvasDemoDb").Get<string>();
             MyConnection.SetGlobalConnectionString(connString);
 
+            if (string.IsNullOrEmpty(APIKey) == false)
+            {
+                txtApiKey.Text = APIKey;
+            }
+            if (string.IsNullOrEmpty(APISecret) == false)
+            {
+                txtApiSecret.Text = APISecret;
+            }
         }
 
         private void btnCreateTableInDatabase_Click(object sender, EventArgs e)
@@ -471,6 +482,8 @@ namespace CanvasDataDemo
             var tableName = txtGetTableName.Text;
 
             var url = $"https://portal.inshosteddata.com/api/account/self/file/byTable/:tableName";
+
+            url = url.Replace(":tableName", tableName);
 
             var request = GetWebRequest(apiKey, apiSecret, timestamp, url);
             WebResponse response = request.GetResponse();
