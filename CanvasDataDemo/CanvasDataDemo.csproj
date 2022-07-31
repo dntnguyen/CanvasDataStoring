@@ -5,7 +5,12 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>flexi.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="flexi.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.123" />

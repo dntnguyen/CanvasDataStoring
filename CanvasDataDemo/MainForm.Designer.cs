@@ -28,15 +28,19 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.tabMain = new System.Windows.Forms.TabControl();
             this.tabPageMain = new System.Windows.Forms.TabPage();
+            this.txtGetSpecificTableData = new System.Windows.Forms.TextBox();
+            this.lblGetSpecificTableData = new System.Windows.Forms.Label();
+            this.btnGetSpecificTableData = new System.Windows.Forms.Button();
             this.rtbJobNotes = new System.Windows.Forms.RichTextBox();
             this.btnStopGetDataJob = new System.Windows.Forms.Button();
             this.btnRunGetDataJob = new System.Windows.Forms.Button();
             this.lblApplicationStatusValue = new System.Windows.Forms.Label();
             this.lblApplicationStatus = new System.Windows.Forms.Label();
             this.tabPageSettings = new System.Windows.Forms.TabPage();
-            this.btnOpenForm1 = new System.Windows.Forms.Button();
             this.btnTestConnection = new System.Windows.Forms.Button();
             this.txtSqlConnectionString = new System.Windows.Forms.TextBox();
             this.lblSqlConnectionString = new System.Windows.Forms.Label();
@@ -49,12 +53,19 @@
             this.lblApiKey = new System.Windows.Forms.Label();
             this.txtTableFileUrl = new System.Windows.Forms.TextBox();
             this.lblTableFileUrl = new System.Windows.Forms.Label();
-            this.btnGetSpecificTableData = new System.Windows.Forms.Button();
-            this.lblGetSpecificTableData = new System.Windows.Forms.Label();
-            this.txtGetSpecificTableData = new System.Windows.Forms.TextBox();
+            this.tabPageUtilities = new System.Windows.Forms.TabPage();
+            this.lblGetFilesOfTableTableName = new System.Windows.Forms.Label();
+            this.txtGetFilesOfTableTableName = new System.Windows.Forms.TextBox();
+            this.lblFilesOfTable = new System.Windows.Forms.Label();
+            this.rtbFilesOfTable = new System.Windows.Forms.RichTextBox();
+            this.btnGetFilesOfTable = new System.Windows.Forms.Button();
+            this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
+            this.btnOpenForm1 = new System.Windows.Forms.Button();
+            this.chkGenerateJsonFile = new System.Windows.Forms.CheckBox();
             this.tabMain.SuspendLayout();
             this.tabPageMain.SuspendLayout();
             this.tabPageSettings.SuspendLayout();
+            this.tabPageUtilities.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabMain
@@ -64,10 +75,11 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabMain.Controls.Add(this.tabPageMain);
             this.tabMain.Controls.Add(this.tabPageSettings);
+            this.tabMain.Controls.Add(this.tabPageUtilities);
             this.tabMain.Location = new System.Drawing.Point(1, 1);
             this.tabMain.Name = "tabMain";
             this.tabMain.SelectedIndex = 0;
-            this.tabMain.Size = new System.Drawing.Size(609, 464);
+            this.tabMain.Size = new System.Drawing.Size(738, 464);
             this.tabMain.TabIndex = 4;
             // 
             // tabPageMain
@@ -83,26 +95,52 @@
             this.tabPageMain.Location = new System.Drawing.Point(4, 24);
             this.tabPageMain.Name = "tabPageMain";
             this.tabPageMain.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageMain.Size = new System.Drawing.Size(601, 436);
+            this.tabPageMain.Size = new System.Drawing.Size(730, 436);
             this.tabPageMain.TabIndex = 0;
             this.tabPageMain.Text = "Main";
             this.tabPageMain.UseVisualStyleBackColor = true;
+            // 
+            // txtGetSpecificTableData
+            // 
+            this.txtGetSpecificTableData.Location = new System.Drawing.Point(155, 93);
+            this.txtGetSpecificTableData.Name = "txtGetSpecificTableData";
+            this.txtGetSpecificTableData.Size = new System.Drawing.Size(158, 23);
+            this.txtGetSpecificTableData.TabIndex = 42;
+            // 
+            // lblGetSpecificTableData
+            // 
+            this.lblGetSpecificTableData.AutoSize = true;
+            this.lblGetSpecificTableData.Location = new System.Drawing.Point(20, 96);
+            this.lblGetSpecificTableData.Name = "lblGetSpecificTableData";
+            this.lblGetSpecificTableData.Size = new System.Drawing.Size(126, 15);
+            this.lblGetSpecificTableData.TabIndex = 41;
+            this.lblGetSpecificTableData.Text = "Get Specific Table Data";
+            // 
+            // btnGetSpecificTableData
+            // 
+            this.btnGetSpecificTableData.Location = new System.Drawing.Point(155, 122);
+            this.btnGetSpecificTableData.Name = "btnGetSpecificTableData";
+            this.btnGetSpecificTableData.Size = new System.Drawing.Size(158, 23);
+            this.btnGetSpecificTableData.TabIndex = 40;
+            this.btnGetSpecificTableData.Text = "Get Specific Table Data";
+            this.btnGetSpecificTableData.UseVisualStyleBackColor = true;
+            this.btnGetSpecificTableData.Click += new System.EventHandler(this.btnGetSpecificTableData_Click);
             // 
             // rtbJobNotes
             // 
             this.rtbJobNotes.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.rtbJobNotes.Location = new System.Drawing.Point(22, 138);
+            this.rtbJobNotes.Location = new System.Drawing.Point(22, 176);
             this.rtbJobNotes.Name = "rtbJobNotes";
-            this.rtbJobNotes.Size = new System.Drawing.Size(561, 292);
+            this.rtbJobNotes.Size = new System.Drawing.Size(690, 254);
             this.rtbJobNotes.TabIndex = 39;
             this.rtbJobNotes.Text = "";
             // 
             // btnStopGetDataJob
             // 
             this.btnStopGetDataJob.Enabled = false;
-            this.btnStopGetDataJob.Location = new System.Drawing.Point(391, 96);
+            this.btnStopGetDataJob.Location = new System.Drawing.Point(393, 122);
             this.btnStopGetDataJob.Name = "btnStopGetDataJob";
             this.btnStopGetDataJob.Size = new System.Drawing.Size(158, 23);
             this.btnStopGetDataJob.TabIndex = 38;
@@ -112,7 +150,7 @@
             // 
             // btnRunGetDataJob
             // 
-            this.btnRunGetDataJob.Location = new System.Drawing.Point(391, 15);
+            this.btnRunGetDataJob.Location = new System.Drawing.Point(155, 51);
             this.btnRunGetDataJob.Name = "btnRunGetDataJob";
             this.btnRunGetDataJob.Size = new System.Drawing.Size(158, 23);
             this.btnRunGetDataJob.TabIndex = 6;
@@ -123,7 +161,7 @@
             // lblApplicationStatusValue
             // 
             this.lblApplicationStatusValue.AutoSize = true;
-            this.lblApplicationStatusValue.Location = new System.Drawing.Point(141, 16);
+            this.lblApplicationStatusValue.Location = new System.Drawing.Point(155, 16);
             this.lblApplicationStatusValue.Name = "lblApplicationStatusValue";
             this.lblApplicationStatusValue.Size = new System.Drawing.Size(36, 15);
             this.lblApplicationStatusValue.TabIndex = 5;
@@ -140,7 +178,7 @@
             // 
             // tabPageSettings
             // 
-            this.tabPageSettings.Controls.Add(this.btnOpenForm1);
+            this.tabPageSettings.Controls.Add(this.chkGenerateJsonFile);
             this.tabPageSettings.Controls.Add(this.btnTestConnection);
             this.tabPageSettings.Controls.Add(this.txtSqlConnectionString);
             this.tabPageSettings.Controls.Add(this.lblSqlConnectionString);
@@ -156,24 +194,14 @@
             this.tabPageSettings.Location = new System.Drawing.Point(4, 24);
             this.tabPageSettings.Name = "tabPageSettings";
             this.tabPageSettings.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageSettings.Size = new System.Drawing.Size(601, 436);
+            this.tabPageSettings.Size = new System.Drawing.Size(730, 436);
             this.tabPageSettings.TabIndex = 1;
             this.tabPageSettings.Text = "Settings";
             this.tabPageSettings.UseVisualStyleBackColor = true;
             // 
-            // btnOpenForm1
-            // 
-            this.btnOpenForm1.Location = new System.Drawing.Point(168, 324);
-            this.btnOpenForm1.Name = "btnOpenForm1";
-            this.btnOpenForm1.Size = new System.Drawing.Size(158, 23);
-            this.btnOpenForm1.TabIndex = 37;
-            this.btnOpenForm1.Text = "Open Form1";
-            this.btnOpenForm1.UseVisualStyleBackColor = true;
-            this.btnOpenForm1.Click += new System.EventHandler(this.btnOpenForm1_Click);
-            // 
             // btnTestConnection
             // 
-            this.btnTestConnection.Location = new System.Drawing.Point(168, 264);
+            this.btnTestConnection.Location = new System.Drawing.Point(168, 314);
             this.btnTestConnection.Name = "btnTestConnection";
             this.btnTestConnection.Size = new System.Drawing.Size(158, 23);
             this.btnTestConnection.TabIndex = 36;
@@ -199,7 +227,7 @@
             // 
             // btnSaveSettings
             // 
-            this.btnSaveSettings.Location = new System.Drawing.Point(422, 264);
+            this.btnSaveSettings.Location = new System.Drawing.Point(422, 314);
             this.btnSaveSettings.Name = "btnSaveSettings";
             this.btnSaveSettings.Size = new System.Drawing.Size(158, 23);
             this.btnSaveSettings.TabIndex = 33;
@@ -275,46 +303,110 @@
             this.lblTableFileUrl.TabIndex = 25;
             this.lblTableFileUrl.Text = "Table File Url";
             // 
-            // btnGetSpecificTableData
+            // tabPageUtilities
             // 
-            this.btnGetSpecificTableData.Location = new System.Drawing.Point(391, 47);
-            this.btnGetSpecificTableData.Name = "btnGetSpecificTableData";
-            this.btnGetSpecificTableData.Size = new System.Drawing.Size(158, 23);
-            this.btnGetSpecificTableData.TabIndex = 40;
-            this.btnGetSpecificTableData.Text = "Get Specific Table Data";
-            this.btnGetSpecificTableData.UseVisualStyleBackColor = true;
-            this.btnGetSpecificTableData.Click += new System.EventHandler(this.btnGetSpecificTableData_Click);
+            this.tabPageUtilities.Controls.Add(this.btnOpenForm1);
+            this.tabPageUtilities.Controls.Add(this.lblGetFilesOfTableTableName);
+            this.tabPageUtilities.Controls.Add(this.txtGetFilesOfTableTableName);
+            this.tabPageUtilities.Controls.Add(this.lblFilesOfTable);
+            this.tabPageUtilities.Controls.Add(this.rtbFilesOfTable);
+            this.tabPageUtilities.Controls.Add(this.btnGetFilesOfTable);
+            this.tabPageUtilities.Location = new System.Drawing.Point(4, 24);
+            this.tabPageUtilities.Name = "tabPageUtilities";
+            this.tabPageUtilities.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageUtilities.Size = new System.Drawing.Size(730, 436);
+            this.tabPageUtilities.TabIndex = 2;
+            this.tabPageUtilities.Text = "Utilities";
+            this.tabPageUtilities.UseVisualStyleBackColor = true;
             // 
-            // lblGetSpecificTableData
+            // lblGetFilesOfTableTableName
             // 
-            this.lblGetSpecificTableData.AutoSize = true;
-            this.lblGetSpecificTableData.Location = new System.Drawing.Point(141, 51);
-            this.lblGetSpecificTableData.Name = "lblGetSpecificTableData";
-            this.lblGetSpecificTableData.Size = new System.Drawing.Size(126, 15);
-            this.lblGetSpecificTableData.TabIndex = 41;
-            this.lblGetSpecificTableData.Text = "Get Specific Table Data";
+            this.lblGetFilesOfTableTableName.AutoSize = true;
+            this.lblGetFilesOfTableTableName.Location = new System.Drawing.Point(18, 21);
+            this.lblGetFilesOfTableTableName.Name = "lblGetFilesOfTableTableName";
+            this.lblGetFilesOfTableTableName.Size = new System.Drawing.Size(69, 15);
+            this.lblGetFilesOfTableTableName.TabIndex = 39;
+            this.lblGetFilesOfTableTableName.Text = "Table Name";
             // 
-            // txtGetSpecificTableData
+            // txtGetFilesOfTableTableName
             // 
-            this.txtGetSpecificTableData.Location = new System.Drawing.Point(273, 48);
-            this.txtGetSpecificTableData.Name = "txtGetSpecificTableData";
-            this.txtGetSpecificTableData.Size = new System.Drawing.Size(100, 23);
-            this.txtGetSpecificTableData.TabIndex = 42;
+            this.txtGetFilesOfTableTableName.Location = new System.Drawing.Point(113, 18);
+            this.txtGetFilesOfTableTableName.Name = "txtGetFilesOfTableTableName";
+            this.txtGetFilesOfTableTableName.Size = new System.Drawing.Size(191, 23);
+            this.txtGetFilesOfTableTableName.TabIndex = 38;
+            // 
+            // lblFilesOfTable
+            // 
+            this.lblFilesOfTable.AutoSize = true;
+            this.lblFilesOfTable.Location = new System.Drawing.Point(18, 56);
+            this.lblFilesOfTable.Name = "lblFilesOfTable";
+            this.lblFilesOfTable.Size = new System.Drawing.Size(74, 15);
+            this.lblFilesOfTable.TabIndex = 37;
+            this.lblFilesOfTable.Text = "Files of Table";
+            // 
+            // rtbFilesOfTable
+            // 
+            this.rtbFilesOfTable.Location = new System.Drawing.Point(113, 54);
+            this.rtbFilesOfTable.Name = "rtbFilesOfTable";
+            this.rtbFilesOfTable.Size = new System.Drawing.Size(412, 239);
+            this.rtbFilesOfTable.TabIndex = 36;
+            this.rtbFilesOfTable.Text = "";
+            // 
+            // btnGetFilesOfTable
+            // 
+            this.btnGetFilesOfTable.Location = new System.Drawing.Point(310, 17);
+            this.btnGetFilesOfTable.Name = "btnGetFilesOfTable";
+            this.btnGetFilesOfTable.Size = new System.Drawing.Size(215, 23);
+            this.btnGetFilesOfTable.TabIndex = 35;
+            this.btnGetFilesOfTable.Text = "Get File Of Table";
+            this.btnGetFilesOfTable.UseVisualStyleBackColor = true;
+            this.btnGetFilesOfTable.Click += new System.EventHandler(this.btnGetFilesOfTable_Click);
+            // 
+            // notifyIcon1
+            // 
+            this.notifyIcon1.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon1.Icon")));
+            this.notifyIcon1.Text = "notifyIcon1";
+            this.notifyIcon1.Visible = true;
+            this.notifyIcon1.DoubleClick += new System.EventHandler(this.notifyIcon1_DoubleClick);
+            // 
+            // btnOpenForm1
+            // 
+            this.btnOpenForm1.Location = new System.Drawing.Point(551, 17);
+            this.btnOpenForm1.Name = "btnOpenForm1";
+            this.btnOpenForm1.Size = new System.Drawing.Size(158, 23);
+            this.btnOpenForm1.TabIndex = 40;
+            this.btnOpenForm1.Text = "Open Form1";
+            this.btnOpenForm1.UseVisualStyleBackColor = true;
+            this.btnOpenForm1.Click += new System.EventHandler(this.btnOpenForm1_Click);
+            // 
+            // chkGenerateJsonFile
+            // 
+            this.chkGenerateJsonFile.AutoSize = true;
+            this.chkGenerateJsonFile.Location = new System.Drawing.Point(168, 264);
+            this.chkGenerateJsonFile.Name = "chkGenerateJsonFile";
+            this.chkGenerateJsonFile.Size = new System.Drawing.Size(125, 19);
+            this.chkGenerateJsonFile.TabIndex = 38;
+            this.chkGenerateJsonFile.Text = "Generate Json File?";
+            this.chkGenerateJsonFile.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(609, 464);
+            this.ClientSize = new System.Drawing.Size(738, 464);
             this.Controls.Add(this.tabMain);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";
-            this.Text = "MainForm";
+            this.Text = "Canvas Data Importer";
             this.Load += new System.EventHandler(this.MainForm_Load);
+            this.Resize += new System.EventHandler(this.MainForm_Resize);
             this.tabMain.ResumeLayout(false);
             this.tabPageMain.ResumeLayout(false);
             this.tabPageMain.PerformLayout();
             this.tabPageSettings.ResumeLayout(false);
             this.tabPageSettings.PerformLayout();
+            this.tabPageUtilities.ResumeLayout(false);
+            this.tabPageUtilities.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -338,11 +430,19 @@
         private System.Windows.Forms.TextBox txtSqlConnectionString;
         private System.Windows.Forms.Label lblSqlConnectionString;
         private System.Windows.Forms.Button btnTestConnection;
-        private System.Windows.Forms.Button btnOpenForm1;
         private System.Windows.Forms.Button btnStopGetDataJob;
         private System.Windows.Forms.RichTextBox rtbJobNotes;
         private System.Windows.Forms.TextBox txtGetSpecificTableData;
         private System.Windows.Forms.Label lblGetSpecificTableData;
         private System.Windows.Forms.Button btnGetSpecificTableData;
+        private System.Windows.Forms.TabPage tabPageUtilities;
+        private System.Windows.Forms.Label lblGetFilesOfTableTableName;
+        private System.Windows.Forms.TextBox txtGetFilesOfTableTableName;
+        private System.Windows.Forms.Label lblFilesOfTable;
+        private System.Windows.Forms.RichTextBox rtbFilesOfTable;
+        private System.Windows.Forms.Button btnGetFilesOfTable;
+        private System.Windows.Forms.NotifyIcon notifyIcon1;
+        private System.Windows.Forms.Button btnOpenForm1;
+        private System.Windows.Forms.CheckBox chkGenerateJsonFile;
     }
 }

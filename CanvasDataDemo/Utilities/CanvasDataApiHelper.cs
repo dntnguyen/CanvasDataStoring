@@ -13,9 +13,22 @@ namespace CanvasDataDemo.Utilities
 {
     public class CanvasDataApiHelper : ICanvasDataApiHelper
     {
-        public IEnumerable<TableSchema> GetLatestTableSchema(string apiKey, string apiSecret, string apiUrl)
+        public ResponseResult<IEnumerable<TableSchema>> GetLatestTableSchema(string apiKey, string apiSecret, string apiUrl)
         {
-            string json = GetCanvasDataApiContentJson(apiKey, apiSecret, apiUrl);
+            var resultGetLatestTableSchema = new ResponseResult<IEnumerable<TableSchema>>();
+            resultGetLatestTableSchema.ResultCode = ResponseResultCode.NoResult;
+            resultGetLatestTableSchema.ResultDescription = "No Result";
+
+            ResponseResult resultGetData = GetCanvasDataApiContentJson(apiKey, apiSecret, apiUrl);
+
+            if (resultGetData.ResultCode != ResponseResultCode.Ok)
+            {
+                resultGetLatestTableSchema.CopyResult(resultGetData);
+                return resultGetLatestTableSchema;
+            }
+
+            string json = resultGetData.ResultValue as string;
+
             var listTableSchema = new List<TableSchema>();
 
             using var doc = JsonDocument.Parse(json);
@@ -85,14 +98,33 @@ namespace CanvasDataDemo.Utilities
                 }
             }
 
-            return listTableSchema;
+            resultGetLatestTableSchema.ResultCode = ResponseResultCode.Ok;
+            resultGetLatestTableSchema.ResultValue = listTableSchema;
+            return resultGetLatestTableSchema;
         }
 
-        public TableFile GetTableFile(string apiKey, string apiSecret, string apiUrl, string tableName)
+        public ResponseResult GetTableFileContentJson(string apiKey, string apiSecret, string apiUrl, string tableName)
         {
             string replaceUrlWithTableName = apiUrl.Replace(":tableName", tableName);
 
-            string json = GetCanvasDataApiContentJson(apiKey, apiSecret, replaceUrlWithTableName);
+            return GetCanvasDataApiContentJson(apiKey, apiSecret, replaceUrlWithTableName);
+        }
+
+        public ResponseResult<TableFile> GetTableFile(string apiKey, string apiSecret, string apiUrl, string tableName)
+        {
+            var resultGetTableFile = new ResponseResult<TableFile>();
+            resultGetTableFile.ResultCode = ResponseResultCode.NoResult;
+            resultGetTableFile.ResultDescription = "No Result";
+
+            ResponseResult resultGetData = GetTableFileContentJson(apiKey, apiSecret, apiUrl, tableName);
+
+            if (resultGetData.ResultCode != ResponseResultCode.Ok)
+            {
+                resultGetTableFile.CopyResult(resultGetData);
+                return resultGetTableFile;
+            }
+
+            string json = resultGetData.ResultValue as string;
 
             var tableFileSchema = new TableFile();
 
@@ -153,19 +185,35 @@ namespace CanvasDataDemo.Utilities
                 }
             }
 
-            return tableFileSchema;
+            resultGetTableFile.ResultCode = ResponseResultCode.Ok;
+            resultGetTableFile.ResultValue = tableFileSchema;
+            return resultGetTableFile;
         }
 
-        private string GetCanvasDataApiContentJson(string apiKey, string apiSecret, string apiUrl)
+        private ResponseResult GetCanvasDataApiContentJson(string apiKey, string apiSecret, string apiUrl)
         {
-            var request = GetWebRequest(apiKey, apiSecret, DateTime.Now, apiUrl);
-            WebResponse response = request.GetResponse();
-            Stream dataStream = response.GetResponseStream();
-            using (var reader = new StreamReader(dataStream))
+            var result = new ResponseResult();
+            result.ResultCode = ResponseResultCode.NoResult;
+            result.ResultDescription = "No Result";
+            try
             {
-                return reader.ReadToEnd();
+                var request = GetWebRequest(apiKey, apiSecret, DateTime.Now, apiUrl);
+                WebResponse response = request.GetResponse();
+                Stream dataStream = response.GetResponseStream();
+                using (var reader = new StreamReader(dataStream))
+                {
+                    result.ResultValue = reader.ReadToEnd();
+                    result.ResultDescription = "Succeeded";
+                    result.ResultCode = ResponseResultCode.Ok;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.ResultDescription = $"Failed to get content json {ex.Message}"; 
+                result.ResultCode = ResponseResultCode.Fail; 
             }
 
+            return result;
         }
 
         private HttpWebRequest GetWebRequest(string apiKey, string apiSecret, DateTime timestamp, string apiUrl)

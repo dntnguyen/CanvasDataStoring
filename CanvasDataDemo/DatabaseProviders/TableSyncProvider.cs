@@ -15,12 +15,6 @@ namespace CanvasDataDemo.DatabaseProviders
     {
         public TableSyncProvider()
         {
-            pTableName = base.ReplaceSpecialTextInDatabase(nameof(TableSync));
-        }
-
-        public ResponseResult<List<TableSync>> GetAll()
-        {
-            return base.GetAll<TableSync>(pTableName);
         }
 
         public TableSync GetTableSync(string tableName)
@@ -31,7 +25,11 @@ namespace CanvasDataDemo.DatabaseProviders
                 var parameters = new DynamicParameters();
                 parameters.Add("@TableName", tableName);
 
-                var result = sqlConnection.QueryFirstOrDefault<TableSync>(this.GetSqlQueryTableInTableSync(),
+                var query = base.GetCreatedDefaultDatabaseTables();
+                query += this.GetSqlQueryTableInTableSync();
+
+                var result = sqlConnection.QueryFirstOrDefault<TableSync>(
+                    query,
                     parameters,
                     commandType: CommandType.Text,
                     commandTimeout: pDefaultQueryTimeoutInSecond);
@@ -42,18 +40,21 @@ namespace CanvasDataDemo.DatabaseProviders
 
         private string GetSqlQueryTableInTableSync()
         {
-            return $" SELECT * FROM {pTableName} WHERE TableName = @TableName " + Environment.NewLine;
+            return $" SELECT * FROM dbo.TableSync WHERE TableName = @TableName " + Environment.NewLine;
         }
 
         public TableSync AddTableToTableSync(string tableNameToAdd)
         {
-            string query = base.GetSqlQuery_CreateTableInTableSyncIfNotExists();
+
+            string query = base.GetCreatedDefaultDatabaseTables();
+            query += base.GetSqlQuery_CreateTableRecordInTableSyncIfNotExists();
             query += this.GetSqlQueryTableInTableSync();
 
 
             using (var sqlConnection = new SqlConnection(pDefaultConnectionString))
             {
                 sqlConnection.Open();
+
                 var parameters = new DynamicParameters();
                 parameters.Add("@TableName", tableNameToAdd);
 

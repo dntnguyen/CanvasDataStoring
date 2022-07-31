@@ -15,8 +15,6 @@ namespace CanvasDataDemo.DatabaseProviders
     {
         protected int pDefaultQueryTimeoutInSecond = MyConnection.DEFAULT_QUERY_TIMEOUT_IN_SECOND;
 
-        protected string pTableName = string.Empty;
-
         protected string pDefaultConnectionString = string.Empty;
 
         public BaseProvider()
@@ -31,18 +29,26 @@ namespace CanvasDataDemo.DatabaseProviders
 
         protected string ReplaceSpecialTextInDatabase(string input)
         {
-            string result = input;
-            switch (input)
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return input;
+            }
+
+            string temp = input;
+            temp = temp.Trim().ToLower();
+            switch (temp)
             {
                 case "public":
+                case "percent":
+                case "max":
                 case "user":
-                    result = input + "x";
+                    input = input + "x";
                     break;
                 default:
                     break;
             }
 
-            return result;
+            return input;
         }
 
         protected ResponseResult<List<T>> GetAll<T>(string tableName)
@@ -80,7 +86,7 @@ namespace CanvasDataDemo.DatabaseProviders
             return response;
         }
 
-        protected string GetSqlQuery_CreateTableInTableSyncIfNotExists()
+        protected string GetSqlQuery_CreateTableRecordInTableSyncIfNotExists()
         {
             string sqlUpdateTableSync = "";
             sqlUpdateTableSync += $" IF NOT EXISTS(SELECT 1 FROM dbo.TableSync WHERE TableName = @TableName) " + Environment.NewLine;
@@ -199,8 +205,8 @@ namespace CanvasDataDemo.DatabaseProviders
                 string paramTableName = "@TableName";
                 string paramSequence = "@Sequence";
 
-                string sqlUpdateTableSync = "";
-                sqlUpdateTableSync += this.GetSqlQuery_CreateTableInTableSyncIfNotExists();
+                string sqlUpdateTableSync = GetCreatedDefaultDatabaseTables();
+                sqlUpdateTableSync += this.GetSqlQuery_CreateTableRecordInTableSyncIfNotExists();
                 sqlUpdateTableSync += $" UPDATE dbo.TableSync SET LatestSequence = {paramSequence}, LastModificationTime = GETDATE() WHERE TableName = {paramTableName} " + Environment.NewLine;
                 //sqlUpdateTableSync += " GO " + Environment.NewLine;
 
@@ -259,6 +265,36 @@ namespace CanvasDataDemo.DatabaseProviders
             }
 
             return res;
+        }
+
+        protected string GetCreatedDefaultDatabaseTables()
+        {
+            var query =
+            " IF NOT EXISTS " + Environment.NewLine +
+            "( " + Environment.NewLine +
+            "SELECT * " + Environment.NewLine +
+            "FROM INFORMATION_SCHEMA.TABLES " + Environment.NewLine +
+            "WHERE TABLE_SCHEMA = 'dbo' " + Environment.NewLine +
+            "AND  TABLE_NAME = 'TableSync' " + Environment.NewLine +
+            ") " + Environment.NewLine +
+            "BEGIN " + Environment.NewLine +
+                "CREATE TABLE[dbo].[TableSync]( " + Environment.NewLine +
+                "[TableName][varchar](50) NOT NULL, " + Environment.NewLine +
+                "[LatestSequence] [int] NULL, " + Environment.NewLine +
+                "[CreationTime][datetime] NULL, " + Environment.NewLine +
+                "[LastModificationTime][datetime] NULL, " + Environment.NewLine +
+                "CONSTRAINT[PK_TableSyncs] PRIMARY KEY CLUSTERED " + Environment.NewLine +
+                "( " + Environment.NewLine +
+                "[TableName] ASC " + Environment.NewLine +
+                ")WITH(PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON[PRIMARY] " + Environment.NewLine +
+                ") ON[PRIMARY] " + Environment.NewLine +
+            "END " + Environment.NewLine +
+            "ELSE " + Environment.NewLine +
+            "BEGIN " + Environment.NewLine +
+                "PRINT('--------Table Existed--------') " + Environment.NewLine +
+            "END" + Environment.NewLine;
+
+            return query;
         }
     }
 }

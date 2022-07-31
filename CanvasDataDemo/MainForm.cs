@@ -37,6 +37,8 @@ namespace CanvasDataDemo
 
         public string? LatestTableSchemaUrl { get => txtLatestTableSchemaUrl.Text; set => txtLatestTableSchemaUrl.Text = value; }
 
+        public bool GenerateJsonFile { get => chkGenerateJsonFile.Checked; set => chkGenerateJsonFile.Checked = value; }
+
         private readonly ILogger<MainForm> _logger;
         private readonly ISettingHelper _settingHelper;
         private readonly ICanvasDataApiHelper _canvasDataApiHelper;
@@ -65,6 +67,7 @@ namespace CanvasDataDemo
             setting.ApiSecret = ApiSecret;
             setting.TableFileUrl = TableFileUrl;
             setting.LatestTableSchemaUrl = LatestTableSchemaUrl;
+            setting.GenerateJsonFile = GenerateJsonFile.ToString();
             return setting;
         }
 
@@ -76,11 +79,17 @@ namespace CanvasDataDemo
                 setting = new Setting();
             }
 
+            var defaultSchemaLatestUrl = "https://portal.inshosteddata.com/api/schema/latest";
+            var defaultTableFileUrl = "https://portal.inshosteddata.com/api/account/self/file/byTable/:tableName";
+
             SqlConnectionString = setting.SqlConnectionString;
             ApiKey = setting.ApiKey;
             ApiSecret = setting.ApiSecret;
-            TableFileUrl = setting.TableFileUrl;
-            LatestTableSchemaUrl = setting.LatestTableSchemaUrl;
+            TableFileUrl = string.IsNullOrEmpty(setting.TableFileUrl) ? defaultTableFileUrl : setting.TableFileUrl;
+            LatestTableSchemaUrl = string.IsNullOrEmpty(setting.LatestTableSchemaUrl) ? defaultSchemaLatestUrl : setting.LatestTableSchemaUrl;
+            GenerateJsonFile = !string.IsNullOrEmpty(setting.GenerateJsonFile) && setting.GenerateJsonFile == "True" 
+                ? true
+                : false;
 
             MyConnection.SetGlobalConnectionString(SqlConnectionString);
         }
@@ -182,6 +191,7 @@ namespace CanvasDataDemo
                 return;
             }
 
+            EnableGetDataControls(false);
             _bgwGetDataJob.RunWorkerAsync();
         }
 
@@ -208,8 +218,18 @@ namespace CanvasDataDemo
             var logText = "Start To Get Data";
             _logger.LogInformation(logText);
             InvokeWriteNotes(logText);
-            IEnumerable<TableSchema> listLatestTableSchema =
-                this._canvasDataApiHelper.GetLatestTableSchema(ApiKey, ApiSecret, LatestTableSchemaUrl);
+
+            var response = this._canvasDataApiHelper.GetLatestTableSchema(ApiKey, ApiSecret, LatestTableSchemaUrl);
+
+            if (response.ResultCode != ResponseResultCode.Ok)
+            {
+                logText = "Start To Get Data";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText);
+                return;
+            }
+
+            var listLatestTableSchema = response.ResultValue;
 
             if (listLatestTableSchema == null || listLatestTableSchema.Count() <= 0)
             {
@@ -230,8 +250,10 @@ namespace CanvasDataDemo
 
                 if (string.IsNullOrEmpty(tableName) || tableSchema.TableName == tableName)
                 {
-                    GetDataJobFromTable(tableSchema);
-                    count++;
+                    if (GetDataJobFromTable(tableSchema))
+                    {
+                        count++;
+                    }
                 }
             }
             var tableCount = string.IsNullOrEmpty(tableName) ? listLatestTableSchema.Count() : 1;
@@ -240,13 +262,13 @@ namespace CanvasDataDemo
             InvokeWriteNotes(logText);
         }
 
-        private void GetDataJobFromTable(TableSchema tableSchema)
+        private bool GetDataJobFromTable(TableSchema tableSchema)
         {
-            TableFileHistory tableFileHistory = GetTableFileAndDownloadToDataFolder(tableSchema);
+            TableFileHistory tableFileHistory = GetTableFileAndDownloadToDataFolder(tableSchema.TableName);
 
             if (tableFileHistory == null || tableFileHistory.FileInfo == null || tableFileHistory.FileInfo.IsCannotDownload())
             {
-                return;
+                return false;
             }
 
             var logText = $"Begin to process table: {tableSchema.TableName}, sequence: {tableFileHistory.Sequence}";
@@ -255,7 +277,8 @@ namespace CanvasDataDemo
 
             string decompressedFileNameFullPath = DownloadFileToFileDataFolder(tableFileHistory.FileInfo);
 
-            string writeFilePath = GetFullPathFolderFileData() + tableSchema.TableName + ".json";
+
+            string writeFilePath = this.GenerateJsonFile ? GetFullPathFolderFileData() + tableSchema.TableName + ".json" : string.Empty;
 
             DataTable dtData = MappingDataRawWithSchemaToDataTable(decompressedFileNameFullPath, tableSchema, writeFilePath);
 
@@ -266,24 +289,73 @@ namespace CanvasDataDemo
                 logText = $"Sucessfully process table: {tableSchema.TableName}, sequence: {tableFileHistory.Sequence}";
                 _logger.LogInformation(logText);
                 InvokeWriteNotes(logText);
+
+                DeleteDownloadedFileWhichWasImportedSuccessfully(tableFileHistory, decompressedFileNameFullPath);
+                return true;
             }
             else
             {
                 logText = $"Fail to process table: {tableSchema.TableName}, sequence: {tableFileHistory.Sequence}. Result: {response.ResultDescription}";
                 _logger.LogInformation(logText);
                 InvokeWriteNotes(logText);
+                return false;
             }
         }
 
-        private TableFileHistory GetTableFileAndDownloadToDataFolder(TableSchema tableSchema)
+        private void DeleteDownloadedFileWhichWasImportedSuccessfully(TableFileHistory tableFileHistory, string decompressedFileNameFullPath)
         {
-            var tableFile = this._canvasDataApiHelper.GetTableFile(ApiKey, ApiSecret, TableFileUrl, tableSchema.TableName);
+            try
+            {
+                if (File.Exists(decompressedFileNameFullPath))
+                {
+
+                    File.Delete(decompressedFileNameFullPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                var logText = $"Fail to delete data file: {decompressedFileNameFullPath}. Error: {ex.Message}";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText);
+            }
+
+            string compressedFileToDelete = GetFullPathFolderFileData() + tableFileHistory.FileInfo.FileName;
+            try
+            {
+                if (File.Exists(compressedFileToDelete))
+                {
+
+                    File.Delete(compressedFileToDelete);
+                }
+            }
+            catch (Exception ex)
+            {
+                var logText = $"Fail to delete data file: {compressedFileToDelete}. Error: {ex.Message}";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText);
+            }
+        }
+
+        private TableFileHistory GetTableFileAndDownloadToDataFolder(string tableName)
+        {
+            var response = this._canvasDataApiHelper.GetTableFile(ApiKey, ApiSecret, TableFileUrl, tableName);
+
+            if (response.ResultCode != ResponseResultCode.Ok)
+            {
+                var logText = $"GetTableFileAndDownloadToDataFolder: {response.ResultDescription}";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText);
+
+                return null;
+            }
+
+            TableFile tableFile = response.ResultValue;
 
             var tableSyncProvider = new TableSyncProvider();
-            var tableSync = tableSyncProvider.GetTableSync(tableSchema.TableName);
+            var tableSync = tableSyncProvider.GetTableSync(tableName);
             if (tableSync is null)
             {
-                tableSync = tableSyncProvider.AddTableToTableSync(tableSchema.TableName);
+                tableSync = tableSyncProvider.AddTableToTableSync(tableName);
             }
 
             int maxSequenceOfTableFile = -1;
@@ -382,8 +454,11 @@ namespace CanvasDataDemo
                 dtDestination.Rows.Add(row);
             }
 
-            var json = JsonConvert.SerializeObject(dtDestination);
-            File.WriteAllText(writeFilePath, json);
+            if (string.IsNullOrEmpty(writeFilePath) == false)
+            {
+                var json = JsonConvert.SerializeObject(dtDestination);
+                File.WriteAllText(writeFilePath, json);
+            }
 
             return dtDestination;
         }
@@ -466,9 +541,18 @@ namespace CanvasDataDemo
             GetDataJob(e, tableName);
         }
 
+        private void EnableGetDataControls(bool enabled)
+        {
+            btnStopGetDataJob.Enabled = !enabled;
+            txtGetSpecificTableData.Enabled = enabled;
+            btnGetSpecificTableData.Enabled = enabled;
+            btnRunGetDataJob.Enabled = enabled;
+        }
+
         private void bgwGetDataJob_RunWorkerCompleted(
             object sender, RunWorkerCompletedEventArgs e)
         {
+            EnableGetDataControls(true);
 
             if (e.Error != null)
             {
@@ -477,6 +561,10 @@ namespace CanvasDataDemo
             else if (e.Cancelled)
             {
                 lblApplicationStatusValue.Text = ApplicationStatuses.SyncCancelled;
+
+                var logText = $"Get Data Job has been cancelled";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText);
             }
             else
             {
@@ -507,5 +595,38 @@ namespace CanvasDataDemo
             }
         }
 
+        private void btnGetFilesOfTable_Click(object sender, EventArgs e)
+        {
+            var tableName = txtGetFilesOfTableTableName.Text;
+            if (string.IsNullOrWhiteSpace(tableName))
+            {
+                MessageBox.Show($"Please input {lblGetFilesOfTableTableName}");
+                return;
+            }
+            var response = this._canvasDataApiHelper.GetTableFileContentJson(ApiKey, ApiSecret, TableFileUrl, tableName);
+            if (response.ResultCode != ResponseResultCode.Ok)
+            {
+                MessageBox.Show(response.ResultDescription);
+                return;
+            }
+            string content = response.ResultValue as string;
+            rtbFilesOfTable.Text = content;
+        }
+
+        private void MainForm_Resize(object sender, EventArgs e)
+        {
+            if (this.WindowState == FormWindowState.Minimized)
+            {
+                Hide();
+                notifyIcon1.Visible = true;
+            }
+        }
+
+        private void notifyIcon1_DoubleClick(object sender, EventArgs e)
+        {
+            Show();
+            this.WindowState = FormWindowState.Normal;
+            notifyIcon1.Visible = false;
+        }
     }
 }

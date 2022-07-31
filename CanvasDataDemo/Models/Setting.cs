@@ -17,5 +17,7 @@ namespace CanvasDataDemo.Models
         public string? TableFileUrl { get; set; }
 
         public string? LatestTableSchemaUrl { get; set; }
+
+        public string? GenerateJsonFile { get; set; }
     }
 }

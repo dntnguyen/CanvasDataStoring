@@ -19,5 +19,11 @@ namespace CanvasDataDemo
         public string ResultDescription { get; set; }
         public T ResultValue { get; set; }
         public object MoreInfo { get; set; }
+
+        public void CopyResult(ResponseResult res)
+        {
+            ResultCode = res.ResultCode;
+            ResultDescription = res.ResultDescription;
+        }
     }
 }
