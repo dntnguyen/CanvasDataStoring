@@ -41,6 +41,10 @@
             this.lblApplicationStatusValue = new System.Windows.Forms.Label();
             this.lblApplicationStatus = new System.Windows.Forms.Label();
             this.tabPageSettings = new System.Windows.Forms.TabPage();
+            this.label1 = new System.Windows.Forms.Label();
+            this.dtpAutoGetDataEverydayTime = new System.Windows.Forms.DateTimePicker();
+            this.chkRunWhenWindowsStarts = new System.Windows.Forms.CheckBox();
+            this.chkGenerateJsonFile = new System.Windows.Forms.CheckBox();
             this.btnTestConnection = new System.Windows.Forms.Button();
             this.txtSqlConnectionString = new System.Windows.Forms.TextBox();
             this.lblSqlConnectionString = new System.Windows.Forms.Label();
@@ -54,18 +58,22 @@
             this.txtTableFileUrl = new System.Windows.Forms.TextBox();
             this.lblTableFileUrl = new System.Windows.Forms.Label();
             this.tabPageUtilities = new System.Windows.Forms.TabPage();
+            this.btnOpenForm1 = new System.Windows.Forms.Button();
             this.lblGetFilesOfTableTableName = new System.Windows.Forms.Label();
             this.txtGetFilesOfTableTableName = new System.Windows.Forms.TextBox();
             this.lblFilesOfTable = new System.Windows.Forms.Label();
             this.rtbFilesOfTable = new System.Windows.Forms.RichTextBox();
             this.btnGetFilesOfTable = new System.Windows.Forms.Button();
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
-            this.btnOpenForm1 = new System.Windows.Forms.Button();
-            this.chkGenerateJsonFile = new System.Windows.Forms.CheckBox();
+            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.tsVersion = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tsVersionValue = new System.Windows.Forms.ToolStripStatusLabel();
+            this.timerAutoGetData = new System.Windows.Forms.Timer(this.components);
             this.tabMain.SuspendLayout();
             this.tabPageMain.SuspendLayout();
             this.tabPageSettings.SuspendLayout();
             this.tabPageUtilities.SuspendLayout();
+            this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabMain
@@ -79,7 +87,7 @@
             this.tabMain.Location = new System.Drawing.Point(1, 1);
             this.tabMain.Name = "tabMain";
             this.tabMain.SelectedIndex = 0;
-            this.tabMain.Size = new System.Drawing.Size(738, 464);
+            this.tabMain.Size = new System.Drawing.Size(738, 438);
             this.tabMain.TabIndex = 4;
             // 
             // tabPageMain
@@ -95,7 +103,7 @@
             this.tabPageMain.Location = new System.Drawing.Point(4, 24);
             this.tabPageMain.Name = "tabPageMain";
             this.tabPageMain.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageMain.Size = new System.Drawing.Size(730, 436);
+            this.tabPageMain.Size = new System.Drawing.Size(730, 410);
             this.tabPageMain.TabIndex = 0;
             this.tabPageMain.Text = "Main";
             this.tabPageMain.UseVisualStyleBackColor = true;
@@ -133,7 +141,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.rtbJobNotes.Location = new System.Drawing.Point(22, 176);
             this.rtbJobNotes.Name = "rtbJobNotes";
-            this.rtbJobNotes.Size = new System.Drawing.Size(690, 254);
+            this.rtbJobNotes.Size = new System.Drawing.Size(690, 228);
             this.rtbJobNotes.TabIndex = 39;
             this.rtbJobNotes.Text = "";
             // 
@@ -178,6 +186,9 @@
             // 
             // tabPageSettings
             // 
+            this.tabPageSettings.Controls.Add(this.label1);
+            this.tabPageSettings.Controls.Add(this.dtpAutoGetDataEverydayTime);
+            this.tabPageSettings.Controls.Add(this.chkRunWhenWindowsStarts);
             this.tabPageSettings.Controls.Add(this.chkGenerateJsonFile);
             this.tabPageSettings.Controls.Add(this.btnTestConnection);
             this.tabPageSettings.Controls.Add(this.txtSqlConnectionString);
@@ -194,14 +205,57 @@
             this.tabPageSettings.Location = new System.Drawing.Point(4, 24);
             this.tabPageSettings.Name = "tabPageSettings";
             this.tabPageSettings.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageSettings.Size = new System.Drawing.Size(730, 436);
+            this.tabPageSettings.Size = new System.Drawing.Size(730, 410);
             this.tabPageSettings.TabIndex = 1;
             this.tabPageSettings.Text = "Settings";
             this.tabPageSettings.UseVisualStyleBackColor = true;
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(17, 313);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(146, 15);
+            this.label1.TabIndex = 42;
+            this.label1.Text = "Auto Get Data Everyday At";
+            // 
+            // dtpAutoGetDataEverydayTime
+            // 
+            this.dtpAutoGetDataEverydayTime.Checked = false;
+            this.dtpAutoGetDataEverydayTime.CustomFormat = "HH:mm";
+            this.dtpAutoGetDataEverydayTime.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dtpAutoGetDataEverydayTime.Location = new System.Drawing.Point(168, 307);
+            this.dtpAutoGetDataEverydayTime.Name = "dtpAutoGetDataEverydayTime";
+            this.dtpAutoGetDataEverydayTime.ShowCheckBox = true;
+            this.dtpAutoGetDataEverydayTime.ShowUpDown = true;
+            this.dtpAutoGetDataEverydayTime.Size = new System.Drawing.Size(133, 23);
+            this.dtpAutoGetDataEverydayTime.TabIndex = 41;
+            this.dtpAutoGetDataEverydayTime.Value = new System.DateTime(2022, 7, 31, 6, 0, 0, 0);
+            // 
+            // chkRunWhenWindowsStarts
+            // 
+            this.chkRunWhenWindowsStarts.AutoSize = true;
+            this.chkRunWhenWindowsStarts.Location = new System.Drawing.Point(168, 263);
+            this.chkRunWhenWindowsStarts.Name = "chkRunWhenWindowsStarts";
+            this.chkRunWhenWindowsStarts.Size = new System.Drawing.Size(162, 19);
+            this.chkRunWhenWindowsStarts.TabIndex = 39;
+            this.chkRunWhenWindowsStarts.Text = "Run when Windows starts";
+            this.chkRunWhenWindowsStarts.UseVisualStyleBackColor = true;
+            this.chkRunWhenWindowsStarts.CheckedChanged += new System.EventHandler(this.chkRunWhenWindowsStarts_CheckedChanged);
+            // 
+            // chkGenerateJsonFile
+            // 
+            this.chkGenerateJsonFile.AutoSize = true;
+            this.chkGenerateJsonFile.Location = new System.Drawing.Point(493, 263);
+            this.chkGenerateJsonFile.Name = "chkGenerateJsonFile";
+            this.chkGenerateJsonFile.Size = new System.Drawing.Size(125, 19);
+            this.chkGenerateJsonFile.TabIndex = 38;
+            this.chkGenerateJsonFile.Text = "Generate Json File?";
+            this.chkGenerateJsonFile.UseVisualStyleBackColor = true;
+            // 
             // btnTestConnection
             // 
-            this.btnTestConnection.Location = new System.Drawing.Point(168, 314);
+            this.btnTestConnection.Location = new System.Drawing.Point(168, 360);
             this.btnTestConnection.Name = "btnTestConnection";
             this.btnTestConnection.Size = new System.Drawing.Size(158, 23);
             this.btnTestConnection.TabIndex = 36;
@@ -219,7 +273,7 @@
             // lblSqlConnectionString
             // 
             this.lblSqlConnectionString.AutoSize = true;
-            this.lblSqlConnectionString.Location = new System.Drawing.Point(24, 224);
+            this.lblSqlConnectionString.Location = new System.Drawing.Point(17, 224);
             this.lblSqlConnectionString.Name = "lblSqlConnectionString";
             this.lblSqlConnectionString.Size = new System.Drawing.Size(127, 15);
             this.lblSqlConnectionString.TabIndex = 34;
@@ -227,7 +281,7 @@
             // 
             // btnSaveSettings
             // 
-            this.btnSaveSettings.Location = new System.Drawing.Point(422, 314);
+            this.btnSaveSettings.Location = new System.Drawing.Point(460, 360);
             this.btnSaveSettings.Name = "btnSaveSettings";
             this.btnSaveSettings.Size = new System.Drawing.Size(158, 23);
             this.btnSaveSettings.TabIndex = 33;
@@ -246,7 +300,7 @@
             // lblLatestTableSchemaUrl
             // 
             this.lblLatestTableSchemaUrl.AutoSize = true;
-            this.lblLatestTableSchemaUrl.Location = new System.Drawing.Point(24, 173);
+            this.lblLatestTableSchemaUrl.Location = new System.Drawing.Point(17, 173);
             this.lblLatestTableSchemaUrl.Name = "lblLatestTableSchemaUrl";
             this.lblLatestTableSchemaUrl.Size = new System.Drawing.Size(131, 15);
             this.lblLatestTableSchemaUrl.TabIndex = 31;
@@ -263,7 +317,7 @@
             // lblApiSecret
             // 
             this.lblApiSecret.AutoSize = true;
-            this.lblApiSecret.Location = new System.Drawing.Point(24, 71);
+            this.lblApiSecret.Location = new System.Drawing.Point(17, 71);
             this.lblApiSecret.Name = "lblApiSecret";
             this.lblApiSecret.Size = new System.Drawing.Size(60, 15);
             this.lblApiSecret.TabIndex = 29;
@@ -280,7 +334,7 @@
             // lblApiKey
             // 
             this.lblApiKey.AutoSize = true;
-            this.lblApiKey.Location = new System.Drawing.Point(24, 25);
+            this.lblApiKey.Location = new System.Drawing.Point(17, 25);
             this.lblApiKey.Name = "lblApiKey";
             this.lblApiKey.Size = new System.Drawing.Size(47, 15);
             this.lblApiKey.TabIndex = 27;
@@ -297,7 +351,7 @@
             // lblTableFileUrl
             // 
             this.lblTableFileUrl.AutoSize = true;
-            this.lblTableFileUrl.Location = new System.Drawing.Point(24, 122);
+            this.lblTableFileUrl.Location = new System.Drawing.Point(17, 122);
             this.lblTableFileUrl.Name = "lblTableFileUrl";
             this.lblTableFileUrl.Size = new System.Drawing.Size(73, 15);
             this.lblTableFileUrl.TabIndex = 25;
@@ -314,10 +368,20 @@
             this.tabPageUtilities.Location = new System.Drawing.Point(4, 24);
             this.tabPageUtilities.Name = "tabPageUtilities";
             this.tabPageUtilities.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageUtilities.Size = new System.Drawing.Size(730, 436);
+            this.tabPageUtilities.Size = new System.Drawing.Size(730, 410);
             this.tabPageUtilities.TabIndex = 2;
             this.tabPageUtilities.Text = "Utilities";
             this.tabPageUtilities.UseVisualStyleBackColor = true;
+            // 
+            // btnOpenForm1
+            // 
+            this.btnOpenForm1.Location = new System.Drawing.Point(551, 17);
+            this.btnOpenForm1.Name = "btnOpenForm1";
+            this.btnOpenForm1.Size = new System.Drawing.Size(158, 23);
+            this.btnOpenForm1.TabIndex = 40;
+            this.btnOpenForm1.Text = "Open Form1";
+            this.btnOpenForm1.UseVisualStyleBackColor = true;
+            this.btnOpenForm1.Click += new System.EventHandler(this.btnOpenForm1_Click);
             // 
             // lblGetFilesOfTableTableName
             // 
@@ -369,31 +433,42 @@
             this.notifyIcon1.Visible = true;
             this.notifyIcon1.DoubleClick += new System.EventHandler(this.notifyIcon1_DoubleClick);
             // 
-            // btnOpenForm1
+            // statusStrip1
             // 
-            this.btnOpenForm1.Location = new System.Drawing.Point(551, 17);
-            this.btnOpenForm1.Name = "btnOpenForm1";
-            this.btnOpenForm1.Size = new System.Drawing.Size(158, 23);
-            this.btnOpenForm1.TabIndex = 40;
-            this.btnOpenForm1.Text = "Open Form1";
-            this.btnOpenForm1.UseVisualStyleBackColor = true;
-            this.btnOpenForm1.Click += new System.EventHandler(this.btnOpenForm1_Click);
+            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsVersion,
+            this.tsVersionValue});
+            this.statusStrip1.Location = new System.Drawing.Point(0, 442);
+            this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Size = new System.Drawing.Size(738, 22);
+            this.statusStrip1.TabIndex = 41;
+            this.statusStrip1.Text = "statusStrip1";
             // 
-            // chkGenerateJsonFile
+            // tsVersion
             // 
-            this.chkGenerateJsonFile.AutoSize = true;
-            this.chkGenerateJsonFile.Location = new System.Drawing.Point(168, 264);
-            this.chkGenerateJsonFile.Name = "chkGenerateJsonFile";
-            this.chkGenerateJsonFile.Size = new System.Drawing.Size(125, 19);
-            this.chkGenerateJsonFile.TabIndex = 38;
-            this.chkGenerateJsonFile.Text = "Generate Json File?";
-            this.chkGenerateJsonFile.UseVisualStyleBackColor = true;
+            this.tsVersion.Name = "tsVersion";
+            this.tsVersion.Size = new System.Drawing.Size(45, 17);
+            this.tsVersion.Text = "Version";
+            this.tsVersion.TextDirection = System.Windows.Forms.ToolStripTextDirection.Horizontal;
+            // 
+            // tsVersionValue
+            // 
+            this.tsVersionValue.Name = "tsVersionValue";
+            this.tsVersionValue.Size = new System.Drawing.Size(31, 17);
+            this.tsVersionValue.Text = "0.0.1";
+            // 
+            // timerAutoGetData
+            // 
+            this.timerAutoGetData.Enabled = true;
+            this.timerAutoGetData.Interval = 10000;
+            this.timerAutoGetData.Tick += new System.EventHandler(this.timerAutoGetData_Tick);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(738, 464);
+            this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.tabMain);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";
@@ -407,7 +482,10 @@
             this.tabPageSettings.PerformLayout();
             this.tabPageUtilities.ResumeLayout(false);
             this.tabPageUtilities.PerformLayout();
+            this.statusStrip1.ResumeLayout(false);
+            this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -444,5 +522,12 @@
         private System.Windows.Forms.NotifyIcon notifyIcon1;
         private System.Windows.Forms.Button btnOpenForm1;
         private System.Windows.Forms.CheckBox chkGenerateJsonFile;
+        private System.Windows.Forms.CheckBox chkRunWhenWindowsStarts;
+        private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.ToolStripStatusLabel tsVersion;
+        private System.Windows.Forms.ToolStripStatusLabel tsVersionValue;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.DateTimePicker dtpAutoGetDataEverydayTime;
+        private System.Windows.Forms.Timer timerAutoGetData;
     }
 }

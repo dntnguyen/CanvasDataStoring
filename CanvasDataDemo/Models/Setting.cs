@@ -19,5 +19,9 @@ namespace CanvasDataDemo.Models
         public string? LatestTableSchemaUrl { get; set; }
 
         public string? GenerateJsonFile { get; set; }
+
+        public string? RunWhenWindowsStarts { get; set; }
+
+        public string? AutoGetDataEverydayAt { get; set; }
     }
 }

@@ -8,6 +8,7 @@ using CanvasDataDemo.Utilities;
 using CanvasDataDemo.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -39,6 +40,10 @@ namespace CanvasDataDemo
 
         public bool GenerateJsonFile { get => chkGenerateJsonFile.Checked; set => chkGenerateJsonFile.Checked = value; }
 
+        public bool RunWhenWindowsStarts { get => chkRunWhenWindowsStarts.Checked; set => chkRunWhenWindowsStarts.Checked = value; }
+
+        public DateTime AutoGetDataEverydayAt { get => dtpAutoGetDataEverydayTime.Value; set => dtpAutoGetDataEverydayTime.Value = value; }
+
         private readonly ILogger<MainForm> _logger;
         private readonly ISettingHelper _settingHelper;
         private readonly ICanvasDataApiHelper _canvasDataApiHelper;
@@ -46,6 +51,8 @@ namespace CanvasDataDemo
 
         private BaseProvider _databaseProvider = null;
         private BackgroundWorker _bgwGetDataJob = new BackgroundWorker();
+
+        private bool _isInternalChange = false;
 
         public MainForm(
             ILogger<MainForm> logger,
@@ -68,6 +75,15 @@ namespace CanvasDataDemo
             setting.TableFileUrl = TableFileUrl;
             setting.LatestTableSchemaUrl = LatestTableSchemaUrl;
             setting.GenerateJsonFile = GenerateJsonFile.ToString();
+            setting.RunWhenWindowsStarts = RunWhenWindowsStarts.ToString();
+            if (dtpAutoGetDataEverydayTime.Checked && AutoGetDataEverydayAt != DateTime.MinValue && AutoGetDataEverydayAt != DateTime.MaxValue)
+            {
+                setting.AutoGetDataEverydayAt = AutoGetDataEverydayAt.ToString("yyyy/MM/dd HH:mm");
+            }
+            else
+            {
+                setting.AutoGetDataEverydayAt = "";
+            }
             return setting;
         }
 
@@ -87,18 +103,45 @@ namespace CanvasDataDemo
             ApiSecret = setting.ApiSecret;
             TableFileUrl = string.IsNullOrEmpty(setting.TableFileUrl) ? defaultTableFileUrl : setting.TableFileUrl;
             LatestTableSchemaUrl = string.IsNullOrEmpty(setting.LatestTableSchemaUrl) ? defaultSchemaLatestUrl : setting.LatestTableSchemaUrl;
-            GenerateJsonFile = !string.IsNullOrEmpty(setting.GenerateJsonFile) && setting.GenerateJsonFile == "True" 
+            GenerateJsonFile = !string.IsNullOrEmpty(setting.GenerateJsonFile) && setting.GenerateJsonFile == "True"
                 ? true
                 : false;
+
+            _isInternalChange = true;
+            RunWhenWindowsStarts = !string.IsNullOrEmpty(setting.RunWhenWindowsStarts) && setting.RunWhenWindowsStarts == "True"
+                ? true
+                : false;
+            _isInternalChange = false;
+
+            if (string.IsNullOrWhiteSpace(setting.AutoGetDataEverydayAt))
+            {
+                AutoGetDataEverydayAt = DateTime.Now;
+                dtpAutoGetDataEverydayTime.Checked = false;
+            }
+            else if (DateTime.TryParse(setting.AutoGetDataEverydayAt, out DateTime parseTime))
+            {
+                if (parseTime == DateTime.MinValue || parseTime == DateTime.MaxValue)
+                {
+                    AutoGetDataEverydayAt = DateTime.Now;
+                    dtpAutoGetDataEverydayTime.Checked = false;
+                }
+                else
+                {
+                    AutoGetDataEverydayAt = parseTime;
+                    dtpAutoGetDataEverydayTime.Checked = true;
+                }
+            }
 
             MyConnection.SetGlobalConnectionString(SqlConnectionString);
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+            tsVersionValue.Text = Program.GetDisplayVersion();
             LoadSettingFromFile();
             this._logger.LogInformation("Load Setting From File");
         }
+
         private void btnTestConnection_Click(object sender, EventArgs e)
         {
             TestConnection();
@@ -186,6 +229,11 @@ namespace CanvasDataDemo
 
         private void btnRunGetDataJob_Click(object sender, EventArgs e)
         {
+            RunGetDataJob();
+        }
+
+        private void RunGetDataJob()
+        {
             if (InitConnectionBeforeRunGetDataJob() == false)
             {
                 return;
@@ -194,7 +242,6 @@ namespace CanvasDataDemo
             EnableGetDataControls(false);
             _bgwGetDataJob.RunWorkerAsync();
         }
-
 
         private void btnGetSpecificTableData_Click(object sender, EventArgs e)
         {
@@ -208,7 +255,7 @@ namespace CanvasDataDemo
                 MessageBox.Show("Please input table name");
                 return;
             }
-
+            EnableGetDataControls(false);
             _bgwGetDataJob.RunWorkerAsync(txtGetSpecificTableData.Text.Trim());
         }
 
@@ -264,14 +311,25 @@ namespace CanvasDataDemo
 
         private bool GetDataJobFromTable(TableSchema tableSchema)
         {
-            TableFileHistory tableFileHistory = GetTableFileAndDownloadToDataFolder(tableSchema.TableName);
+            var resultGetTableFileHistory = GetTableFileAndDownloadToDataFolder(tableSchema.TableName);
+
+            string? logText;
+            if (resultGetTableFileHistory.ResultCode != ResponseResultCode.Ok)
+            {
+                logText = $"Process table {tableSchema.TableName}: {resultGetTableFileHistory.ResultDescription}";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText);
+                return false;
+            }
+
+            TableFileHistory tableFileHistory = resultGetTableFileHistory.ResultValue;
 
             if (tableFileHistory == null || tableFileHistory.FileInfo == null || tableFileHistory.FileInfo.IsCannotDownload())
             {
                 return false;
             }
 
-            var logText = $"Begin to process table: {tableSchema.TableName}, sequence: {tableFileHistory.Sequence}";
+            logText = $"Begin to process table: {tableSchema.TableName}, sequence: {tableFileHistory.Sequence}";
             _logger.LogInformation(logText);
             InvokeWriteNotes(logText);
 
@@ -336,20 +394,25 @@ namespace CanvasDataDemo
             }
         }
 
-        private TableFileHistory GetTableFileAndDownloadToDataFolder(string tableName)
+        private ResponseResult<TableFileHistory> GetTableFileAndDownloadToDataFolder(string tableName)
         {
-            var response = this._canvasDataApiHelper.GetTableFile(ApiKey, ApiSecret, TableFileUrl, tableName);
+            var result = new ResponseResult<TableFileHistory>();
+            result.ResultCode = ResponseResultCode.NoResult;
 
-            if (response.ResultCode != ResponseResultCode.Ok)
+            var responseGetTableFile = this._canvasDataApiHelper.GetTableFile(ApiKey, ApiSecret, TableFileUrl, tableName);
+
+            if (responseGetTableFile.ResultCode != ResponseResultCode.Ok)
             {
-                var logText = $"GetTableFileAndDownloadToDataFolder: {response.ResultDescription}";
+                var logText = $"Failed to GetTableFileAndDownloadToDataFolder: {responseGetTableFile.ResultDescription}";
                 _logger.LogInformation(logText);
                 InvokeWriteNotes(logText);
 
-                return null;
+                result.ResultCode = ResponseResultCode.Fail;
+                result.ResultDescription = responseGetTableFile.ResultDescription;
+                return result;
             }
 
-            TableFile tableFile = response.ResultValue;
+            TableFile tableFile = responseGetTableFile.ResultValue;
 
             var tableSyncProvider = new TableSyncProvider();
             var tableSync = tableSyncProvider.GetTableSync(tableName);
@@ -365,10 +428,19 @@ namespace CanvasDataDemo
                 maxSequenceOfTableFile = tableFile.ListHistory.Max(x => x.Sequence);
                 if (tableSync.LatestSequence is null || tableSync.LatestSequence <= 0 || tableSync.LatestSequence < maxSequenceOfTableFile)
                 {
-                    return tableFile.ListHistory.FirstOrDefault(x => x.Sequence == maxSequenceOfTableFile);
+                    result.ResultCode = ResponseResultCode.Ok;
+                    result.ResultDescription = "Succeeded";
+                    result.ResultValue = tableFile.ListHistory.FirstOrDefault(x => x.Sequence == maxSequenceOfTableFile);
+                    return result;
+                }
+                
+                if (tableSync.LatestSequence >= maxSequenceOfTableFile)
+                {
+                    result.ResultCode = ResponseResultCode.Fail;
+                    result.ResultDescription = "Data is up to date";
+                    return result;
                 }
             }
-
 
             return null;
         }
@@ -627,6 +699,51 @@ namespace CanvasDataDemo
             Show();
             this.WindowState = FormWindowState.Normal;
             notifyIcon1.Visible = false;
+        }
+
+        private void chkRunWhenWindowsStarts_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_isInternalChange)
+            {
+                return;
+            }
+
+            try
+            {
+                RegistryKey reg = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+                if (chkRunWhenWindowsStarts.Checked)
+                {
+                    reg.SetValue("FxdCanvasDataImporter", Application.ExecutablePath.ToString());
+                }
+                else
+                {
+                    reg.DeleteValue("FxdCanvasDataImporter");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("RunWhenWindowsStarts: " + ex.Message);
+            }
+        }
+
+        private void timerAutoGetData_Tick(object sender, EventArgs e)
+        {
+            if (AutoGetDataEverydayAt == DateTime.MinValue || AutoGetDataEverydayAt == DateTime.MaxValue)
+            {
+                return;
+            }
+
+            var hour = AutoGetDataEverydayAt.Hour;
+            var minute = AutoGetDataEverydayAt.Minute;
+
+            var now = DateTime.Now;
+            if (now.Hour == hour && now.Minute == minute)
+            {
+                if (_bgwGetDataJob.IsBusy == false)
+                {
+                    RunGetDataJob();
+                }
+            }
         }
     }
 }

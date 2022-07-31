@@ -15,6 +15,11 @@ namespace CanvasDataDemo
 {
     static class Program
     {
+        public static string ApplicationName = "FxdCanvasDataImporter";
+        public static int MainVersion = 0;
+        public static int PatchVersion = 0;
+        public static int MinorVersion = 1;
+
         public static IConfiguration Configuration;
 
         public static IServiceProvider ServiceProvider { get; private set; }
@@ -107,6 +112,13 @@ namespace CanvasDataDemo
                 }
             }
 
+        }
+
+
+        public static string GetDisplayVersion()
+        {
+            string version = $"{MainVersion}.{PatchVersion}.{MinorVersion}";
+            return version;
         }
     }
 }

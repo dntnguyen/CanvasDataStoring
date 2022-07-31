@@ -18,5 +18,10 @@ namespace CanvasDataDemo.Views
 
         string? LatestTableSchemaUrl { get; set; }
 
+        bool GenerateJsonFile { get; set; }
+
+        bool RunWhenWindowsStarts { get; set; }
+
+        DateTime AutoGetDataEverydayAt { get; set; }
     }
 }
