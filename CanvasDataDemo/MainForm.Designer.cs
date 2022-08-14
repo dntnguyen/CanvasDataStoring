@@ -69,6 +69,8 @@
             this.tsVersion = new System.Windows.Forms.ToolStripStatusLabel();
             this.tsVersionValue = new System.Windows.Forms.ToolStripStatusLabel();
             this.timerAutoGetData = new System.Windows.Forms.Timer(this.components);
+            this.txtSequence = new System.Windows.Forms.TextBox();
+            this.lblSequence = new System.Windows.Forms.Label();
             this.tabMain.SuspendLayout();
             this.tabPageMain.SuspendLayout();
             this.tabPageSettings.SuspendLayout();
@@ -92,6 +94,8 @@
             // 
             // tabPageMain
             // 
+            this.tabPageMain.Controls.Add(this.lblSequence);
+            this.tabPageMain.Controls.Add(this.txtSequence);
             this.tabPageMain.Controls.Add(this.txtGetSpecificTableData);
             this.tabPageMain.Controls.Add(this.lblGetSpecificTableData);
             this.tabPageMain.Controls.Add(this.btnGetSpecificTableData);
@@ -118,7 +122,7 @@
             // lblGetSpecificTableData
             // 
             this.lblGetSpecificTableData.AutoSize = true;
-            this.lblGetSpecificTableData.Location = new System.Drawing.Point(20, 96);
+            this.lblGetSpecificTableData.Location = new System.Drawing.Point(7, 96);
             this.lblGetSpecificTableData.Name = "lblGetSpecificTableData";
             this.lblGetSpecificTableData.Size = new System.Drawing.Size(126, 15);
             this.lblGetSpecificTableData.TabIndex = 41;
@@ -126,7 +130,7 @@
             // 
             // btnGetSpecificTableData
             // 
-            this.btnGetSpecificTableData.Location = new System.Drawing.Point(155, 122);
+            this.btnGetSpecificTableData.Location = new System.Drawing.Point(155, 151);
             this.btnGetSpecificTableData.Name = "btnGetSpecificTableData";
             this.btnGetSpecificTableData.Size = new System.Drawing.Size(158, 23);
             this.btnGetSpecificTableData.TabIndex = 40;
@@ -139,16 +143,16 @@
             this.rtbJobNotes.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.rtbJobNotes.Location = new System.Drawing.Point(22, 176);
+            this.rtbJobNotes.Location = new System.Drawing.Point(22, 191);
             this.rtbJobNotes.Name = "rtbJobNotes";
-            this.rtbJobNotes.Size = new System.Drawing.Size(690, 228);
+            this.rtbJobNotes.Size = new System.Drawing.Size(690, 213);
             this.rtbJobNotes.TabIndex = 39;
             this.rtbJobNotes.Text = "";
             // 
             // btnStopGetDataJob
             // 
             this.btnStopGetDataJob.Enabled = false;
-            this.btnStopGetDataJob.Location = new System.Drawing.Point(393, 122);
+            this.btnStopGetDataJob.Location = new System.Drawing.Point(392, 147);
             this.btnStopGetDataJob.Name = "btnStopGetDataJob";
             this.btnStopGetDataJob.Size = new System.Drawing.Size(158, 23);
             this.btnStopGetDataJob.TabIndex = 38;
@@ -178,7 +182,7 @@
             // lblApplicationStatus
             // 
             this.lblApplicationStatus.AutoSize = true;
-            this.lblApplicationStatus.Location = new System.Drawing.Point(19, 16);
+            this.lblApplicationStatus.Location = new System.Drawing.Point(7, 16);
             this.lblApplicationStatus.Name = "lblApplicationStatus";
             this.lblApplicationStatus.Size = new System.Drawing.Size(103, 15);
             this.lblApplicationStatus.TabIndex = 4;
@@ -463,6 +467,21 @@
             this.timerAutoGetData.Interval = 10000;
             this.timerAutoGetData.Tick += new System.EventHandler(this.timerAutoGetData_Tick);
             // 
+            // txtSequence
+            // 
+            this.txtSequence.Location = new System.Drawing.Point(155, 122);
+            this.txtSequence.Name = "txtSequence";
+            this.txtSequence.Size = new System.Drawing.Size(84, 23);
+            this.txtSequence.TabIndex = 43;
+            // 
+            // lblSequence
+            // 
+            this.lblSequence.Location = new System.Drawing.Point(7, 125);
+            this.lblSequence.Name = "lblSequence";
+            this.lblSequence.Size = new System.Drawing.Size(142, 49);
+            this.lblSequence.TabIndex = 44;
+            this.lblSequence.Text = "Sequence (leave it empty to get latest sequence)";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -529,5 +548,7 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.DateTimePicker dtpAutoGetDataEverydayTime;
         private System.Windows.Forms.Timer timerAutoGetData;
+        private System.Windows.Forms.TextBox txtSequence;
+        private System.Windows.Forms.Label lblSequence;
     }
 }

@@ -256,10 +256,17 @@ namespace CanvasDataDemo
                 return;
             }
             EnableGetDataControls(false);
-            _bgwGetDataJob.RunWorkerAsync(txtGetSpecificTableData.Text.Trim());
+            int? sequence = null;
+            if (int.TryParse(txtSequence.Text?.Trim(), out int resultInt))
+            {
+                sequence = resultInt;
+            }
+            var dicParam = new Dictionary<string, int?>();
+            dicParam.Add(txtGetSpecificTableData.Text.Trim(), sequence);
+            _bgwGetDataJob.RunWorkerAsync(dicParam);
         }
 
-        private void GetDataJob(DoWorkEventArgs e, string tableName = "")
+        private void GetDataJob(DoWorkEventArgs e, string tableName = "", int? sequence = null)
         {
             InvokeWriteNotes("", true);
             var logText = "Start To Get Data";
@@ -297,7 +304,7 @@ namespace CanvasDataDemo
 
                 if (string.IsNullOrEmpty(tableName) || tableSchema.TableName == tableName)
                 {
-                    if (GetDataJobFromTable(tableSchema))
+                    if (GetDataJobFromTable(tableSchema, sequence))
                     {
                         count++;
                     }
@@ -309,11 +316,19 @@ namespace CanvasDataDemo
             InvokeWriteNotes(logText);
         }
 
-        private bool GetDataJobFromTable(TableSchema tableSchema)
+        private bool GetDataJobFromTable(TableSchema tableSchema, int? sequence)
         {
             var resultGetTableFileHistory = GetTableFileAndDownloadToDataFolder(tableSchema.TableName);
 
             string? logText;
+            if (resultGetTableFileHistory is null)
+            {
+                logText = $"No TableFileHistory response result for {tableSchema.TableName}";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText);
+                return false;
+            }
+
             if (resultGetTableFileHistory.ResultCode != ResponseResultCode.Ok)
             {
                 logText = $"Process table {tableSchema.TableName}: {resultGetTableFileHistory.ResultDescription}";
@@ -329,7 +344,9 @@ namespace CanvasDataDemo
                 return false;
             }
 
-            logText = $"Begin to process table: {tableSchema.TableName}, sequence: {tableFileHistory.Sequence}";
+            int downloadSequence = sequence is null || sequence <= 0 ? tableFileHistory.Sequence : (int)sequence;
+
+            logText = $"Begin to process table: {tableSchema.TableName}, sequence: {downloadSequence}";
             _logger.LogInformation(logText);
             InvokeWriteNotes(logText);
 
@@ -344,7 +361,7 @@ namespace CanvasDataDemo
             var response = _databaseProvider.InsertDataToTable(tableSchema, tableFileHistory, dtData);
             if (response.ResultCode == ResponseResultCode.Ok)
             {
-                logText = $"Sucessfully process table: {tableSchema.TableName}, sequence: {tableFileHistory.Sequence}";
+                logText = $"Sucessfully process table: {tableSchema.TableName}, sequence: {downloadSequence}";
                 _logger.LogInformation(logText);
                 InvokeWriteNotes(logText);
 
@@ -353,7 +370,7 @@ namespace CanvasDataDemo
             }
             else
             {
-                logText = $"Fail to process table: {tableSchema.TableName}, sequence: {tableFileHistory.Sequence}. Result: {response.ResultDescription}";
+                logText = $"Fail to process table: {tableSchema.TableName}, sequence: {downloadSequence}. Result: {response.ResultDescription}";
                 _logger.LogInformation(logText);
                 InvokeWriteNotes(logText);
                 return false;
@@ -609,8 +626,20 @@ namespace CanvasDataDemo
         {
             lblApplicationStatusValue.Invoke((MethodInvoker)(() => lblApplicationStatusValue.Text = ApplicationStatuses.SyncingData));
 
-            string tableName = e.Argument as string;
-            GetDataJob(e, tableName);
+            string tableName = string.Empty;
+            int? sequence = null;
+            try
+            {
+                var dicParam = e.Argument as Dictionary<string, int?>;
+                var param = dicParam.FirstOrDefault();
+                tableName = param.Key;
+                sequence = param.Value; 
+            }
+            catch(Exception ex)
+            {
+                InvokeWriteNotes("bgwGetDataJob_DoWork. Error casting dicParam: " + ex.Message);
+            }
+            GetDataJob(e, tableName, sequence);
         }
 
         private void EnableGetDataControls(bool enabled)
@@ -728,22 +757,22 @@ namespace CanvasDataDemo
 
         private void timerAutoGetData_Tick(object sender, EventArgs e)
         {
-            if (AutoGetDataEverydayAt == DateTime.MinValue || AutoGetDataEverydayAt == DateTime.MaxValue)
-            {
-                return;
-            }
+            ////if (AutoGetDataEverydayAt == DateTime.MinValue || AutoGetDataEverydayAt == DateTime.MaxValue)
+            ////{
+            ////    return;
+            ////}
 
-            var hour = AutoGetDataEverydayAt.Hour;
-            var minute = AutoGetDataEverydayAt.Minute;
+            ////var hour = AutoGetDataEverydayAt.Hour;
+            ////var minute = AutoGetDataEverydayAt.Minute;
 
-            var now = DateTime.Now;
-            if (now.Hour == hour && now.Minute == minute)
-            {
-                if (_bgwGetDataJob.IsBusy == false)
-                {
-                    RunGetDataJob();
-                }
-            }
+            ////var now = DateTime.Now;
+            ////if (now.Hour == hour && now.Minute == minute)
+            ////{
+            ////    if (_bgwGetDataJob.IsBusy == false)
+            ////    {
+            ////        RunGetDataJob();
+            ////    }
+            ////}
         }
     }
 }
