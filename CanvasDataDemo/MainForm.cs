@@ -69,27 +69,49 @@ namespace CanvasDataDemo
         private Setting GetSetting()
         {
             var setting = new Setting();
-            setting.SqlConnectionString = SqlConnectionString;
-            setting.ApiKey = ApiKey;
-            setting.ApiSecret = ApiSecret;
-            setting.TableFileUrl = TableFileUrl;
-            setting.LatestTableSchemaUrl = LatestTableSchemaUrl;
-            setting.GenerateJsonFile = GenerateJsonFile.ToString();
-            setting.RunWhenWindowsStarts = RunWhenWindowsStarts.ToString();
-            if (dtpAutoGetDataEverydayTime.Checked && AutoGetDataEverydayAt != DateTime.MinValue && AutoGetDataEverydayAt != DateTime.MaxValue)
+            try
             {
-                setting.AutoGetDataEverydayAt = AutoGetDataEverydayAt.ToString("yyyy/MM/dd HH:mm");
+                setting.SqlConnectionString = SqlConnectionString;
+                setting.ApiKey = ApiKey;
+                setting.ApiSecret = ApiSecret;
+                setting.TableFileUrl = TableFileUrl;
+                setting.LatestTableSchemaUrl = LatestTableSchemaUrl;
+                setting.GenerateJsonFile = GenerateJsonFile.ToString();
+                setting.RunWhenWindowsStarts = RunWhenWindowsStarts.ToString();
+                if (dtpAutoGetDataEverydayTime.Checked && AutoGetDataEverydayAt != DateTime.MinValue && AutoGetDataEverydayAt != DateTime.MaxValue)
+                {
+                    setting.AutoGetDataEverydayAt = AutoGetDataEverydayAt.ToString("yyyy/MM/dd HH:mm");
+                }
+                else
+                {
+                    setting.AutoGetDataEverydayAt = "";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                setting.AutoGetDataEverydayAt = "";
+                _logger.LogError("GetSetting: " + ex.Message);
             }
             return setting;
         }
 
         private void LoadSettingFromFile()
         {
-            var setting = this._settingHelper.GetSettingFromFile()?.ResultValue;
+            var response = this._settingHelper.GetSettingFromFile();
+            if (response == null)
+            {
+                var logText = "No response GetSettingFromFile";
+                _logger.LogError(logText);
+                MessageBox.Show(logText);
+                return;
+            }
+
+            if (response.ResultCode != ResponseResultCode.Ok)
+            {
+                MessageBox.Show(response.ResultDescription);
+                return;
+            }
+
+            var setting = response.ResultValue;
             if (setting is null)
             {
                 setting = new Setting();
@@ -147,12 +169,12 @@ namespace CanvasDataDemo
             TestConnection();
         }
 
-        private bool TestConnection(bool isShowMessagae = true)
+        private bool TestConnection(bool isShowMessage = true)
         {
             string sqlConnectionString = txtSqlConnectionString.Text;
             if (string.IsNullOrWhiteSpace(sqlConnectionString))
             {
-                if (isShowMessagae)
+                if (isShowMessage)
                 {
                     MessageBox.Show("Please input connection string");
                 }
@@ -163,7 +185,7 @@ namespace CanvasDataDemo
 
             if (string.IsNullOrEmpty(testConnectionErrorDescription))
             {
-                if (isShowMessagae)
+                if (isShowMessage)
                 {
                     MessageBox.Show("Success");
                 }
@@ -171,7 +193,7 @@ namespace CanvasDataDemo
             }
             else
             {
-                if (isShowMessagae)
+                if (isShowMessage)
                 {
                     MessageBox.Show($"Failed to connection to database: {testConnectionErrorDescription}");
                 }
@@ -184,7 +206,7 @@ namespace CanvasDataDemo
             _bgwGetDataJob.WorkerReportsProgress = true;
             _bgwGetDataJob.WorkerSupportsCancellation = true;
             _bgwGetDataJob.DoWork +=
-                new DoWorkEventHandler(bgwGetDataJob_DoWork);
+                new DoWorkEventHandler(bgwGetDataJob_RunWorkerAsync_DoWork);
             _bgwGetDataJob.RunWorkerCompleted +=
                 new RunWorkerCompletedEventHandler(
             bgwGetDataJob_RunWorkerCompleted);
@@ -193,7 +215,7 @@ namespace CanvasDataDemo
             bgwGetDataJob_ProgressChanged);
         }
 
-        private void InvokeWriteNotes(string message, bool isClear = false)
+        private void InvokeWriteNotes(string message, bool isClear, Color? color = null)
         {
             if (isClear)
             {
@@ -203,7 +225,27 @@ namespace CanvasDataDemo
 
             DateTime nun = DateTime.Now;
             var nunText = nun.ToString("yyyy-MM-dd HH:mm:ss fff");
-            rtbJobNotes.Invoke((MethodInvoker)(() => rtbJobNotes.Text += nunText + "\t" + message + "\n"));
+            rtbJobNotes.Invoke((MethodInvoker)(() =>
+            {
+                if (color is not null)
+                {
+                    rtbJobNotes.SelectionStart = rtbJobNotes.TextLength;
+                    rtbJobNotes.SelectionLength = 0;
+                    rtbJobNotes.SelectionColor = color.Value;
+                }
+                rtbJobNotes.AppendText(nunText + "\t" + message + "\n");
+                rtbJobNotes.SelectionColor = rtbJobNotes.ForeColor;
+            }));
+        }
+
+        private void InvokeWriteNotes(string message, Color color)
+        {
+            InvokeWriteNotes(message, false, color);
+        }
+
+        private void InvokeWriteNotes(string message, bool isClear = false)
+        {
+            InvokeWriteNotes(message, isClear, null);
         }
 
         private void btnSaveSettings_Click(object sender, EventArgs e)
@@ -234,12 +276,21 @@ namespace CanvasDataDemo
 
         private void RunGetDataJob()
         {
-            if (InitConnectionBeforeRunGetDataJob() == false)
+            try
             {
+                if (InitConnectionBeforeRunGetDataJob() == false)
+                {
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("RunGetDataJob: " + ex.Message);
                 return;
             }
 
             EnableGetDataControls(false);
+
             _bgwGetDataJob.RunWorkerAsync();
         }
 
@@ -269,31 +320,58 @@ namespace CanvasDataDemo
         private void GetDataJob(DoWorkEventArgs e, string tableName = "", int? sequence = null)
         {
             InvokeWriteNotes("", true);
-            var logText = "Start To Get Data";
+            var logText = Messages.StartToGetData;
             _logger.LogInformation(logText);
-            InvokeWriteNotes(logText);
+            InvokeWriteNotes(logText, Color.Blue);
 
-            var response = this._canvasDataApiHelper.GetLatestTableSchema(ApiKey, ApiSecret, LatestTableSchemaUrl);
+            if (string.IsNullOrEmpty(tableName) == false)
+            {
+                logText = $"GetLatestTableSchema tableName:{tableName}, sequence: {(sequence != null ? sequence.ToString() : "")}";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText);
+            }
+
+            ResponseResult<IEnumerable<TableSchema>> response;
+            try
+            {
+                response = this._canvasDataApiHelper.GetLatestTableSchema(ApiKey, ApiSecret, LatestTableSchemaUrl);
+            }
+            catch (Exception ex)
+            {
+                logText = $"GetLatestTableSchema failed: " + ex.Message;
+                _logger.LogError(logText);
+                InvokeWriteNotes(logText, Color.Red);
+                return;
+            }
 
             if (response.ResultCode != ResponseResultCode.Ok)
             {
-                logText = "Start To Get Data";
+                logText = Messages.StartToGetData;
                 _logger.LogInformation(logText);
-                InvokeWriteNotes(logText);
+                InvokeWriteNotes(logText, Color.DarkOrange);
                 return;
             }
+
+            logText = $"GetLatestTableSchema succeeded";
+            _logger.LogInformation(logText);
+            InvokeWriteNotes(logText);
 
             var listLatestTableSchema = response.ResultValue;
 
             if (listLatestTableSchema == null || listLatestTableSchema.Count() <= 0)
             {
-                logText = "No Table To Get Data";
+                logText = Messages.NoTableToGetData;
                 _logger.LogInformation(logText);
-                InvokeWriteNotes(logText);
+                InvokeWriteNotes(logText, Color.DarkOrange);
                 return;
             }
 
             var count = 0;
+
+            logText = $"Begin GetDataJobFromTable from listLatestTableSchema";
+            _logger.LogInformation(logText);
+            InvokeWriteNotes(logText, Color.Blue);
+
             foreach (var tableSchema in listLatestTableSchema)
             {
                 if (_bgwGetDataJob.CancellationPending == true)
@@ -313,19 +391,21 @@ namespace CanvasDataDemo
             var tableCount = string.IsNullOrEmpty(tableName) ? listLatestTableSchema.Count() : 1;
             logText = $"Finish To Get Table Data. Total:{count}/{tableCount}";
             _logger.LogInformation(logText);
-            InvokeWriteNotes(logText);
+            InvokeWriteNotes(logText, Color.Blue);
         }
 
         private bool GetDataJobFromTable(TableSchema tableSchema, int? sequence)
         {
-            var resultGetTableFileHistory = GetTableFileAndDownloadToDataFolder(tableSchema.TableName);
+            _logger.LogInformation($"GetTableFileAndDownloadToDataFolder table:{tableSchema}");
 
-            string? logText;
+            var resultGetTableFileHistory = GetTableFileAndDownloadToDataFolder(tableSchema, sequence);
+
+            string logText = string.Empty;
             if (resultGetTableFileHistory is null)
             {
                 logText = $"No TableFileHistory response result for {tableSchema.TableName}";
                 _logger.LogInformation(logText);
-                InvokeWriteNotes(logText);
+                InvokeWriteNotes(logText, Color.DarkOrange);
                 return false;
             }
 
@@ -333,7 +413,7 @@ namespace CanvasDataDemo
             {
                 logText = $"Process table {tableSchema.TableName}: {resultGetTableFileHistory.ResultDescription}";
                 _logger.LogInformation(logText);
-                InvokeWriteNotes(logText);
+                InvokeWriteNotes(logText, Color.DarkOrange);
                 return false;
             }
 
@@ -341,24 +421,66 @@ namespace CanvasDataDemo
 
             if (tableFileHistory == null || tableFileHistory.FileInfo == null || tableFileHistory.FileInfo.IsCannotDownload())
             {
+                logText = "no data Table File History";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText, Color.DarkOrange);
                 return false;
             }
 
-            int downloadSequence = sequence is null || sequence <= 0 ? tableFileHistory.Sequence : (int)sequence;
+            int downloadSequence = tableFileHistory.Sequence;
 
-            logText = $"Begin to process table: {tableSchema.TableName}, sequence: {downloadSequence}";
+            logText = $"Begin to process table: {tableSchema.TableName}" +
+                $", sequence: {downloadSequence}, partial: {tableFileHistory.Partial}";
             _logger.LogInformation(logText);
             InvokeWriteNotes(logText);
 
+            _logger.LogInformation($"DownloadFileToFileDataFolder: {tableSchema.TableName}");
             string decompressedFileNameFullPath = DownloadFileToFileDataFolder(tableFileHistory.FileInfo);
 
+            if (string.IsNullOrEmpty(decompressedFileNameFullPath))
+            {
+                logText = $"No decompressedFileNameFullPath to process, table: {tableSchema.TableName}";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText, Color.DarkOrange);
+                return false;
+            }
 
             string writeFilePath = this.GenerateJsonFile ? GetFullPathFolderFileData() + tableSchema.TableName + ".json" : string.Empty;
 
-            DataTable dtData = MappingDataRawWithSchemaToDataTable(decompressedFileNameFullPath, tableSchema, writeFilePath);
+            DataTable dtData = null;
 
+            _logger.LogInformation($"MappingDataRawWithSchemaToDataTable table: {tableSchema.TableName}, decompressedFileNameFullPath:{decompressedFileNameFullPath}, " +
+                $"writeFilePath: {writeFilePath}");
+            try
+            {
+                dtData = MappingDataRawWithSchemaToDataTable(decompressedFileNameFullPath, tableSchema, writeFilePath);
+            }
+            catch (Exception ex)
+            {
+                logText = $"MappingDataRawWithSchemaToDataTable table: {tableSchema.TableName} failed: " + ex.Message;
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText, Color.Red);
+                return false;
+            }
 
-            var response = _databaseProvider.InsertDataToTable(tableSchema, tableFileHistory, dtData);
+            _logger.LogInformation($"InsertDataToTable");
+
+            int? latestSequence = null;
+            try
+            {
+                var tableSyncProvider = new TableSyncProvider();
+                TableSync? tableSync = null;
+                tableSync = tableSyncProvider.GetTableSync(tableSchema.TableName);
+                latestSequence = tableSync.LatestSequence;
+            }
+            catch (Exception ex)
+            {
+                logText = $"GetTableSync for latestSequence for tableName:{tableSchema.TableName} failed: " + ex.Message;
+                _logger.LogError(logText);
+                InvokeWriteNotes(logText, Color.Red);
+            }
+
+            var response = _databaseProvider.InsertDataToTable(tableSchema, tableFileHistory, dtData, latestSequence);
             if (response.ResultCode == ResponseResultCode.Ok)
             {
                 logText = $"Sucessfully process table: {tableSchema.TableName}, sequence: {downloadSequence}";
@@ -372,7 +494,7 @@ namespace CanvasDataDemo
             {
                 logText = $"Fail to process table: {tableSchema.TableName}, sequence: {downloadSequence}. Result: {response.ResultDescription}";
                 _logger.LogInformation(logText);
-                InvokeWriteNotes(logText);
+                InvokeWriteNotes(logText, Color.DarkOrange);
                 return false;
             }
         }
@@ -391,7 +513,7 @@ namespace CanvasDataDemo
             {
                 var logText = $"Fail to delete data file: {decompressedFileNameFullPath}. Error: {ex.Message}";
                 _logger.LogInformation(logText);
-                InvokeWriteNotes(logText);
+                InvokeWriteNotes(logText, Color.Red);
             }
 
             string compressedFileToDelete = GetFullPathFolderFileData() + tableFileHistory.FileInfo.FileName;
@@ -407,12 +529,14 @@ namespace CanvasDataDemo
             {
                 var logText = $"Fail to delete data file: {compressedFileToDelete}. Error: {ex.Message}";
                 _logger.LogInformation(logText);
-                InvokeWriteNotes(logText);
+                InvokeWriteNotes(logText, Color.Red);
             }
         }
 
-        private ResponseResult<TableFileHistory> GetTableFileAndDownloadToDataFolder(string tableName)
+        private ResponseResult<TableFileHistory> GetTableFileAndDownloadToDataFolder(TableSchema tableSchema, int? specificSequence = null)
         {
+            string tableName = tableSchema.TableName;
+
             var result = new ResponseResult<TableFileHistory>();
             result.ResultCode = ResponseResultCode.NoResult;
 
@@ -420,9 +544,9 @@ namespace CanvasDataDemo
 
             if (responseGetTableFile.ResultCode != ResponseResultCode.Ok)
             {
-                var logText = $"Failed to GetTableFileAndDownloadToDataFolder: {responseGetTableFile.ResultDescription}";
+                var logText = $"GetTableFileAndDownloadToDataFolder failed to GetTableFile: {responseGetTableFile.ResultDescription}";
                 _logger.LogInformation(logText);
-                InvokeWriteNotes(logText);
+                InvokeWriteNotes(logText, Color.DarkOrange);
 
                 result.ResultCode = ResponseResultCode.Fail;
                 result.ResultDescription = responseGetTableFile.ResultDescription;
@@ -432,16 +556,49 @@ namespace CanvasDataDemo
             TableFile tableFile = responseGetTableFile.ResultValue;
 
             var tableSyncProvider = new TableSyncProvider();
-            var tableSync = tableSyncProvider.GetTableSync(tableName);
+            TableSync? tableSync = null;
+
+            try
+            {
+                tableSync = tableSyncProvider.GetTableSync(tableName);
+            }
+            catch (Exception ex)
+            {
+                var logText = $"GetTableFileAndDownloadToDataFolder, GetTableSync TableName:{tableName} failed: " + ex.Message;
+                _logger.LogError(logText);
+                result.ResultCode = ResponseResultCode.Fail;
+                result.ResultDescription = logText;
+                return result;
+            }
+
             if (tableSync is null)
             {
-                tableSync = tableSyncProvider.AddTableToTableSync(tableName);
+                try
+                {
+                    tableSync = tableSyncProvider.AddTableToTableSync(tableName, tableSchema.Incremental);
+                }
+                catch (Exception ex)
+                {
+                    var logText = $"GetTableFileAndDownloadToDataFolder, AddTableToTableSync TableName: {tableName} failed: " + ex.Message;
+                    _logger.LogError(logText);
+                    result.ResultCode = ResponseResultCode.Fail;
+                    result.ResultDescription = logText;
+                    return result;
+                }
             }
 
             int maxSequenceOfTableFile = -1;
 
             if (tableFile.ListHistory?.Count > 0)
             {
+                if (specificSequence is not null)
+                {
+                    result.ResultCode = ResponseResultCode.Ok;
+                    result.ResultDescription = "Succeeded";
+                    result.ResultValue = tableFile.ListHistory.FirstOrDefault(x => x.Sequence == specificSequence);
+                    return result;
+                }
+
                 maxSequenceOfTableFile = tableFile.ListHistory.Max(x => x.Sequence);
                 if (tableSync.LatestSequence is null || tableSync.LatestSequence <= 0 || tableSync.LatestSequence < maxSequenceOfTableFile)
                 {
@@ -450,7 +607,7 @@ namespace CanvasDataDemo
                     result.ResultValue = tableFile.ListHistory.FirstOrDefault(x => x.Sequence == maxSequenceOfTableFile);
                     return result;
                 }
-                
+
                 if (tableSync.LatestSequence >= maxSequenceOfTableFile)
                 {
                     result.ResultCode = ResponseResultCode.Fail;
@@ -469,21 +626,29 @@ namespace CanvasDataDemo
 
         private string DownloadFileToFileDataFolder(TableFileFileInfo tableFileFileInfo)
         {
-            var fullPathFolder = GetFullPathFolderFileData();
-
-            var downloadUrl = tableFileFileInfo.Url;
-            var downloadFileName = tableFileFileInfo.FileName;
-
-            Directory.CreateDirectory(fullPathFolder);
-
-            using (var mywebClient = new WebClient())
+            try
             {
-                mywebClient.DownloadFile(downloadUrl, fullPathFolder + downloadFileName);
+                var fullPathFolder = GetFullPathFolderFileData();
+
+                var downloadUrl = tableFileFileInfo.Url;
+                var downloadFileName = tableFileFileInfo.FileName;
+
+                Directory.CreateDirectory(fullPathFolder);
+
+                using (var mywebClient = new WebClient())
+                {
+                    mywebClient.DownloadFile(downloadUrl, fullPathFolder + downloadFileName);
+                }
+
+                string decompressedFileNameFullPath = DecompressDownloadedFile(downloadFileName);
+
+                return decompressedFileNameFullPath;
             }
-
-            string decompressedFileNameFullPath = DecompressDownloadedFile(downloadFileName);
-
-            return decompressedFileNameFullPath;
+            catch (Exception ex)
+            {
+                _logger.LogError("DownloadFileToFileDataFolder faield: " + ex.Message);
+                return string.Empty;
+            }
         }
 
         private string DecompressDownloadedFile(string downloadedFileName)
@@ -600,19 +765,6 @@ namespace CanvasDataDemo
             return dt;
         }
 
-        private void btnOpenFolder_Click(object sender, EventArgs e)
-        {
-            var fullPathFolder = Directory.GetCurrentDirectory() + "\\" + _fileDataFolderName;
-            try
-            {
-                Process.Start(fullPathFolder);
-            }
-            catch (Exception ex)
-            {
-
-            }
-        }
-
         private void btnOpenForm1_Click(object sender, EventArgs e)
         {
             var form1 = new Form1();
@@ -621,24 +773,35 @@ namespace CanvasDataDemo
             form1.Show(this);
         }
 
-        private void bgwGetDataJob_DoWork(object sender,
+        private void bgwGetDataJob_RunWorkerAsync_DoWork(object sender,
             DoWorkEventArgs e)
         {
-            lblApplicationStatusValue.Invoke((MethodInvoker)(() => lblApplicationStatusValue.Text = ApplicationStatuses.SyncingData));
-
+            _logger.LogInformation("bgwGetDataJob_DoWork started");
+            lblApplicationStatusValue.Invoke(
+                (MethodInvoker)(() => lblApplicationStatusValue.Text = ApplicationStatuses.SyncingData));
             string tableName = string.Empty;
             int? sequence = null;
-            try
+
+            //Get tableName and sequence for Get Specific Table
+            if (e.Argument != null)
             {
-                var dicParam = e.Argument as Dictionary<string, int?>;
-                var param = dicParam.FirstOrDefault();
-                tableName = param.Key;
-                sequence = param.Value; 
+                try
+                {
+                    _logger.LogInformation("bgwGetDataJob_RunWorkerAsync_DoWork get param table, sequence from dictionary");
+                    var dicParam = e.Argument as Dictionary<string, int?>;
+                    var param = dicParam.FirstOrDefault();
+                    tableName = param.Key;
+                    sequence = param.Value;
+                }
+                catch (Exception ex)
+                {
+                    var logText = "Failed to get job table, sequence param: " + ex.Message;
+                    _logger.LogError(logText);
+                    InvokeWriteNotes(logText, Color.Red);
+                    return;
+                }
             }
-            catch(Exception ex)
-            {
-                InvokeWriteNotes("bgwGetDataJob_DoWork. Error casting dicParam: " + ex.Message);
-            }
+
             GetDataJob(e, tableName, sequence);
         }
 
@@ -658,6 +821,8 @@ namespace CanvasDataDemo
             if (e.Error != null)
             {
                 lblApplicationStatusValue.Text = ApplicationStatuses.SyncEndedWithError;
+                _logger.LogInformation(e.Error.Message);
+                InvokeWriteNotes(e.Error.Message, Color.Red);
             }
             else if (e.Cancelled)
             {
@@ -711,7 +876,7 @@ namespace CanvasDataDemo
                 return;
             }
             string content = response.ResultValue as string;
-            rtbFilesOfTable.Text = content;
+            rtbResultData.Text = content;
         }
 
         private void MainForm_Resize(object sender, EventArgs e)
@@ -773,6 +938,48 @@ namespace CanvasDataDemo
             ////        RunGetDataJob();
             ////    }
             ////}
+        }
+
+        private void btnGetLatestSchema_Click(object sender, EventArgs e)
+        {
+            var response = this._canvasDataApiHelper.GetLatestTableSchema(ApiKey, ApiSecret, LatestTableSchemaUrl, true);
+            if (response.ResultCode != ResponseResultCode.Ok)
+            {
+                MessageBox.Show(response.ResultDescription);
+                return;
+            }
+            string content = response.MoreInfo as string;
+            rtbResultData.Text = content;
+        }
+
+        private void btnGetTableSyncData_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var tableSyncProvider = new TableSyncProvider();
+                var list = tableSyncProvider.GetListTableSync();
+                string content = JsonConvert.SerializeObject(list);
+                rtbResultData.Text = content;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("GetTableSyncData:" + ex.Message);
+            }
+        }
+
+        private void btnGetTableSyncHistoryData_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var tableSyncProvider = new TableSyncProvider();
+                var list = tableSyncProvider.GetListTableSyncHistory();
+                string content = JsonConvert.SerializeObject(list);
+                rtbResultData.Text = content;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("GetTableSyncHistoryData:" + ex.Message);
+            }
         }
     }
 }

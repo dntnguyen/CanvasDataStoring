@@ -38,12 +38,50 @@ namespace CanvasDataDemo.DatabaseProviders
             }
         }
 
+        public IEnumerable<TableSync> GetListTableSync()
+        {
+            using (var sqlConnection = new SqlConnection(pDefaultConnectionString))
+            {
+                sqlConnection.Open();
+                var parameters = new DynamicParameters();
+
+                var query = "SELECT * FROM dbo.TableSync ";
+
+                var result = sqlConnection.Query<TableSync>(
+                    query,
+                    parameters,
+                    commandType: CommandType.Text,
+                    commandTimeout: pDefaultQueryTimeoutInSecond);
+
+                return result;
+            }
+        }
+
+        public IEnumerable<TableSyncHistory> GetListTableSyncHistory()
+        {
+            using (var sqlConnection = new SqlConnection(pDefaultConnectionString))
+            {
+                sqlConnection.Open();
+                var parameters = new DynamicParameters();
+
+                var query = "SELECT * FROM dbo.TableSyncHistory ";
+
+                var result = sqlConnection.Query<TableSyncHistory>(
+                    query,
+                    parameters,
+                    commandType: CommandType.Text,
+                    commandTimeout: pDefaultQueryTimeoutInSecond);
+
+                return result;
+            }
+        }
+
         private string GetSqlQueryTableInTableSync()
         {
             return $" SELECT * FROM dbo.TableSync WHERE TableName = @TableName " + Environment.NewLine;
         }
 
-        public TableSync AddTableToTableSync(string tableNameToAdd)
+        public TableSync AddTableToTableSync(string tableNameToAdd, bool isIncremental)
         {
 
             string query = base.GetCreatedDefaultDatabaseTables();
@@ -57,6 +95,7 @@ namespace CanvasDataDemo.DatabaseProviders
 
                 var parameters = new DynamicParameters();
                 parameters.Add("@TableName", tableNameToAdd);
+                parameters.Add("@IsIncremental", isIncremental);
 
                 var result = sqlConnection.QueryFirstOrDefault<TableSync>(query,
                     parameters,

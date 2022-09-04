@@ -11,19 +11,26 @@ namespace CanvasDataDemo
     {
         public static string GenerateHMACSignature(string secret, string url, DateTime timestamp)
         {
-            var uri = new Uri(url);
-            string query = "";
-            if (uri.Query.Length > 1)
+            try
             {
-                var queryParams = uri.Query.Substring(1).Split('&').OrderBy(q => q);
-                query = Combine(queryParams, "&");
-            }
-            var parts = $"GET\n{uri.Host}\n\n\n{uri.AbsolutePath}\n{query}\n{timestamp.ToUniversalTime().ToString("r")}\n{secret}";
+                var uri = new Uri(url);
+                string query = "";
+                if (uri.Query.Length > 1)
+                {
+                    var queryParams = uri.Query.Substring(1).Split('&').OrderBy(q => q);
+                    query = Combine(queryParams, "&");
+                }
+                var parts = $"GET\n{uri.Host}\n\n\n{uri.AbsolutePath}\n{query}\n{timestamp.ToUniversalTime().ToString("r")}\n{secret}";
 
-            using (HMACSHA256 hmac = new HMACSHA256(Encoding.Default.GetBytes(secret)))
+                using (HMACSHA256 hmac = new HMACSHA256(Encoding.Default.GetBytes(secret)))
+                {
+                    var hash = hmac.ComputeHash(Encoding.Default.GetBytes(parts));
+                    return Convert.ToBase64String(hash);
+                }
+            }
+            catch (Exception ex)
             {
-                var hash = hmac.ComputeHash(Encoding.Default.GetBytes(parts));
-                return Convert.ToBase64String(hash);
+                return "[Failed] GenerateHMACSignature. Error: " + ex.Message;
             }
         }
 

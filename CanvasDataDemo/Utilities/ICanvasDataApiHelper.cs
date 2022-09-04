@@ -6,7 +6,7 @@ namespace CanvasDataDemo.Utilities
 {
     public interface ICanvasDataApiHelper
     {
-        ResponseResult<IEnumerable<TableSchema>> GetLatestTableSchema(string apiKey, string apiSecret, string url);
+        ResponseResult<IEnumerable<TableSchema>> GetLatestTableSchema(string apiKey, string apiSecret, string apiUrl, bool isReturnJsonOnly = false);
 
         ResponseResult GetTableFileContentJson(string apiKey, string apiSecret, string apiUrl, string tableName);
 

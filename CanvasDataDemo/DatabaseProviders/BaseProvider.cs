@@ -1,6 +1,9 @@
 ﻿using CanvasDataDemo.DatabaseHelper;
+using CanvasDataDemo.Datas;
 using CanvasDataDemo.Models;
 using Dapper;
+using log4net.Core;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -91,21 +94,36 @@ namespace CanvasDataDemo.DatabaseProviders
             string sqlUpdateTableSync = "";
             sqlUpdateTableSync += $" IF NOT EXISTS(SELECT 1 FROM dbo.TableSync WHERE TableName = @TableName) " + Environment.NewLine;
             sqlUpdateTableSync += " BEGIN " + Environment.NewLine;
-            sqlUpdateTableSync += $"     INSERT INTO dbo.TableSync (TableName, CreationTime) VALUES (@TableName, GETDATE()) " + Environment.NewLine;
+            sqlUpdateTableSync += $"     INSERT INTO dbo.TableSync (TableName, IsIncremental, CreationTime) " +
+                $"VALUES (@TableName, @IsIncremental, GETDATE()) " + Environment.NewLine;
             sqlUpdateTableSync += " END " + Environment.NewLine;
 
             return sqlUpdateTableSync;
         }
 
-        public virtual ResponseResult InsertDataToTable(TableSchema tableSchema, TableFileHistory tableFileHistory, DataTable dtData)
+        protected string GetSqlQuery_AddRecordToTableSyncHistory()
+        {
+            string sqlUpdateTableSync = "";
+            sqlUpdateTableSync += $" INSERT INTO dbo.TableSyncHistory (TableName, Sequence, Partial, CreationTime) " +
+                $"VALUES (@HistoryTableName, @HistorySequence, @HistoryPartial, GETDATE()) " + Environment.NewLine;
+
+            return sqlUpdateTableSync;
+        }
+
+        public virtual ResponseResult InsertDataToTable(TableSchema tableSchema, 
+            TableFileHistory tableFileHistory, DataTable dtData, int? latestSequence = null)
         {
             var res = new ResponseResult();
             res.ResultCode = ResponseResultCode.NoResult;
             res.ResultDescription = "No Result";
 
+            string colName_ImportedSequence = "ImportedSequence";
+
             //Create Table And Columns
             var tableName = tableSchema.TableName;
-            var sequence = tableFileHistory.Sequence;
+            var sequenceToUpdateLatestSequence = latestSequence == null || latestSequence < tableFileHistory.Sequence
+                ? tableFileHistory.Sequence : latestSequence;
+            var isIncremental = tableSchema.Incremental;
 
             var createTableColumnParameters = new DynamicParameters();
             createTableColumnParameters.Add("@TableName", this.ReplaceSpecialTextInDatabase(tableName));
@@ -114,6 +132,11 @@ namespace CanvasDataDemo.DatabaseProviders
             foreach (DataColumn col in dtData.Columns)
             {
                 columnGenerateScript += $" {ReplaceSpecialTextInDatabase(col.ColumnName)} NVARCHAR(MAX) ,";
+            }
+            //For ImportedSequence
+            if (dtData.Columns.Count > 0 && dtData.Columns.Contains(colName_ImportedSequence) == false)
+            {
+                columnGenerateScript += $" {colName_ImportedSequence} int ,";
             }
 
             if (columnGenerateScript.Substring(columnGenerateScript.Length - 1, 1) == ",")
@@ -126,7 +149,6 @@ namespace CanvasDataDemo.DatabaseProviders
                         columnGenerateScript +
                         " ) " + Environment.NewLine
                 ;
-
 
             string sqlScriptDeleteTableDataIfNotPartial = "";
             if (tableFileHistory.Partial == false)
@@ -142,6 +164,12 @@ namespace CanvasDataDemo.DatabaseProviders
             {
                 columnsScriptForInsert += $" {ReplaceSpecialTextInDatabase(col.ColumnName)},";
             }
+            //For ImportedSequence
+            if (dtData.Columns.Count > 0 && dtData.Columns.Contains(colName_ImportedSequence) == false)
+            {
+                columnsScriptForInsert += $" {colName_ImportedSequence},";
+            }
+
             if (columnsScriptForInsert.Substring(columnsScriptForInsert.Length - 1, 1) == ",")
             {
                 columnsScriptForInsert = columnsScriptForInsert.Substring(0, columnsScriptForInsert.Length - 1);
@@ -185,6 +213,11 @@ namespace CanvasDataDemo.DatabaseProviders
                             insertParameters.Add(insertParamName, row[col]);
                         }
                     }
+                    //for ImportedSequence
+                    var insertParamName_ImportedSequence = $"@{colName_ImportedSequence}";
+                    valueChildString += insertParamName_ImportedSequence + ",";
+                    insertParameters.Add(insertParamName_ImportedSequence, tableFileHistory.Sequence, DbType.Int32);
+
                     if (valueChildString.Substring(valueChildString.Length - 1, 1) == ",")
                     {
                         valueChildString = valueChildString.Substring(0, valueChildString.Length - 1);
@@ -204,15 +237,22 @@ namespace CanvasDataDemo.DatabaseProviders
 
                 string paramTableName = "@TableName";
                 string paramSequence = "@Sequence";
+                string paramIsIncremental = "@IsIncremental";
 
                 string sqlUpdateTableSync = GetCreatedDefaultDatabaseTables();
                 sqlUpdateTableSync += this.GetSqlQuery_CreateTableRecordInTableSyncIfNotExists();
                 sqlUpdateTableSync += $" UPDATE dbo.TableSync SET LatestSequence = {paramSequence}, LastModificationTime = GETDATE() WHERE TableName = {paramTableName} " + Environment.NewLine;
-                //sqlUpdateTableSync += " GO " + Environment.NewLine;
+
+                sqlUpdateTableSync += this.GetSqlQuery_AddRecordToTableSyncHistory();
 
                 var tableSyncParams = new DynamicParameters();
                 tableSyncParams.Add(paramTableName, tableName);
-                tableSyncParams.Add(paramSequence, sequence);
+                tableSyncParams.Add(paramSequence, sequenceToUpdateLatestSequence);
+                tableSyncParams.Add(paramIsIncremental, isIncremental);
+
+                tableSyncParams.Add("@HistoryTableName", tableName);
+                tableSyncParams.Add("@HistorySequence", tableFileHistory.Sequence);
+                tableSyncParams.Add("@HistoryPartial", tableFileHistory.Partial);
 
                 sqlConnection.Execute(sql: sqlUpdateTableSync,
                         param: tableSyncParams,
@@ -281,6 +321,7 @@ namespace CanvasDataDemo.DatabaseProviders
                 "CREATE TABLE[dbo].[TableSync]( " + Environment.NewLine +
                 "[TableName][varchar](50) NOT NULL, " + Environment.NewLine +
                 "[LatestSequence] [int] NULL, " + Environment.NewLine +
+                "[IsIncremental] [bit] NULL, " + Environment.NewLine +
                 "[CreationTime][datetime] NULL, " + Environment.NewLine +
                 "[LastModificationTime][datetime] NULL, " + Environment.NewLine +
                 "CONSTRAINT[PK_TableSyncs] PRIMARY KEY CLUSTERED " + Environment.NewLine +
@@ -288,6 +329,25 @@ namespace CanvasDataDemo.DatabaseProviders
                 "[TableName] ASC " + Environment.NewLine +
                 ")WITH(PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON[PRIMARY] " + Environment.NewLine +
                 ") ON[PRIMARY] " + Environment.NewLine +
+            "END " + Environment.NewLine +
+            "ELSE " + Environment.NewLine +
+            "BEGIN " + Environment.NewLine +
+                "PRINT('--------Table Existed--------') " + Environment.NewLine +
+            "END" + Environment.NewLine;
+
+            query += " IF NOT EXISTS " + Environment.NewLine +
+            "( " + Environment.NewLine +
+            "SELECT * " + Environment.NewLine +
+            "FROM INFORMATION_SCHEMA.TABLES " + Environment.NewLine +
+            "WHERE TABLE_SCHEMA = 'dbo' " + Environment.NewLine +
+            "AND  TABLE_NAME = 'TableSyncHistory' " + Environment.NewLine +
+            ") " + Environment.NewLine +
+            "BEGIN " + Environment.NewLine +
+                "CREATE TABLE[dbo].[TableSyncHistory]( " + Environment.NewLine +
+                "[TableName][varchar](50) NOT NULL, " + Environment.NewLine +
+                "[Sequence] [int] NULL, " + Environment.NewLine +
+                "[Partial] [bit] NULL, " + Environment.NewLine +
+                "[CreationTime][datetime] NULL) ON[PRIMARY] " + Environment.NewLine +
             "END " + Environment.NewLine +
             "ELSE " + Environment.NewLine +
             "BEGIN " + Environment.NewLine +

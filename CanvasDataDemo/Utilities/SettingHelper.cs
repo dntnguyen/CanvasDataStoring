@@ -1,4 +1,5 @@
 ﻿using CanvasDataDemo.Models;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,18 +13,42 @@ namespace CanvasDataDemo.Utilities
     public class SettingHelper : ISettingHelper
     {
         private const string CANVAS_DATA_EXPLORER_APPSETTING_FILENAME = "canvas_data_appsetting.json";
+        private readonly ILogger<MainForm> _logger;
+
+        public SettingHelper(ILogger<MainForm> logger)
+        {
+            this._logger = logger;
+        }
+
         public void WriteSettingToFile(Setting setting)
         {
-            string content = JsonSerializer.Serialize(setting);
-            File.WriteAllText(CANVAS_DATA_EXPLORER_APPSETTING_FILENAME, content);
+            try
+            {
+                string content = JsonSerializer.Serialize(setting);
+                File.WriteAllText(CANVAS_DATA_EXPLORER_APPSETTING_FILENAME, content);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("WriteSettingToFile: " + ex.Message);
+            }
         }
 
         public ResponseResult<Setting> GetSettingFromFile()
         {
             var result = new ResponseResult<Setting>();
-
-            File.AppendAllText(CANVAS_DATA_EXPLORER_APPSETTING_FILENAME, string.Empty);
-            string content = File.ReadAllText(CANVAS_DATA_EXPLORER_APPSETTING_FILENAME);
+            string content;
+            try
+            {
+                File.AppendAllText(CANVAS_DATA_EXPLORER_APPSETTING_FILENAME, string.Empty);
+                content = File.ReadAllText(CANVAS_DATA_EXPLORER_APPSETTING_FILENAME);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("GetSettingFromFile: " + ex.Message);
+                result.ResultCode = ResponseResultCode.Fail;
+                result.ResultDescription = "Failed to Append/Read data to Setting";
+                return result;
+            }
 
             try
             {
@@ -31,8 +56,9 @@ namespace CanvasDataDemo.Utilities
                 result.ResultDescription = "Succeeded";
                 result.ResultCode = ResponseResultCode.Ok;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError("GetSettingFromFile: " + ex.Message);
                 result.ResultCode = ResponseResultCode.Fail;
                 result.ResultDescription = "Failed to parse text data to Setting";
             }
