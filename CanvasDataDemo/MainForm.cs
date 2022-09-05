@@ -49,7 +49,8 @@ namespace CanvasDataDemo
         private readonly ICanvasDataApiHelper _canvasDataApiHelper;
         private readonly string _fileDataFolderName = "FileData";
 
-        private BaseProvider _databaseProvider = null;
+        private IBaseProvider _baseProvider = null;
+        private ITableSyncProvider _tableSyncProvider = null;
         private BackgroundWorker _bgwGetDataJob = new BackgroundWorker();
 
         private bool _isInternalChange = false;
@@ -259,7 +260,8 @@ namespace CanvasDataDemo
             MyConnection.SetGlobalConnectionString(SqlConnectionString);
             if (TestConnection(false))
             {
-                _databaseProvider = new BaseProvider();
+                _baseProvider = new BaseProvider();
+                _tableSyncProvider = new TableSyncProvider();
                 return true;
             }
             else
@@ -372,6 +374,8 @@ namespace CanvasDataDemo
             _logger.LogInformation(logText);
             InvokeWriteNotes(logText, Color.Blue);
 
+            string ignoreTables = txtIgnoreTables.Text;
+
             foreach (var tableSchema in listLatestTableSchema)
             {
                 if (_bgwGetDataJob.CancellationPending == true)
@@ -380,9 +384,25 @@ namespace CanvasDataDemo
                     return;
                 }
 
+                if (string.IsNullOrWhiteSpace(ignoreTables) == false)
+                {
+                    ignoreTables = "," + ignoreTables + ",";
+                    if (ignoreTables.Contains("," + tableSchema.TableName + ",", StringComparison.OrdinalIgnoreCase))
+                    {
+                        logText = $"{tableSchema.TableName} is ignored";
+                        _logger.LogInformation(logText);
+                        InvokeWriteNotes(logText, Color.DarkOrange);
+                        continue;
+                    }
+                }
+
                 if (string.IsNullOrEmpty(tableName) || tableSchema.TableName == tableName)
                 {
-                    if (GetDataJobFromTable(tableSchema, sequence))
+                    if (tableSchema.Incremental == false && GetDataJobFromTable(tableSchema, sequence))
+                    {
+                        count++;
+                    }
+                    else if (tableSchema.Incremental && GetDataJobFromTableForIncremental(tableSchema, sequence, e))
                     {
                         count++;
                     }
@@ -400,7 +420,7 @@ namespace CanvasDataDemo
 
             var resultGetTableFileHistory = GetTableFileAndDownloadToDataFolder(tableSchema, sequence);
 
-            string logText = string.Empty;
+            string logText;
             if (resultGetTableFileHistory is null)
             {
                 logText = $"No TableFileHistory response result for {tableSchema.TableName}";
@@ -413,13 +433,56 @@ namespace CanvasDataDemo
             {
                 logText = $"Process table {tableSchema.TableName}: {resultGetTableFileHistory.ResultDescription}";
                 _logger.LogInformation(logText);
-                InvokeWriteNotes(logText, Color.DarkOrange);
+                if (resultGetTableFileHistory.ResultCode == ResponseResultCode.Warning)
+                {
+                    InvokeWriteNotes(logText, Color.DarkGreen);
+                }
+                else
+                {
+                    InvokeWriteNotes(logText, Color.DarkOrange);
+                }
                 return false;
             }
 
             TableFileHistory tableFileHistory = resultGetTableFileHistory.ResultValue;
 
-            if (tableFileHistory == null || tableFileHistory.FileInfo == null || tableFileHistory.FileInfo.IsCannotDownload())
+            return ProcessGetDataByTableFileHistory(tableSchema, tableFileHistory);
+        }
+
+        private bool GetDataJobFromTableForIncremental(TableSchema tableSchema, int? sequence, DoWorkEventArgs e)
+        {
+            _logger.LogInformation($"GetTableFileAndDownloadToDataFolder table:{tableSchema}");
+
+            var resultGetListTableFileHistory = GetTableFileAndDownloadToDataFolderForIncremental(tableSchema);
+
+            string logText;
+            if (resultGetListTableFileHistory is null)
+            {
+                logText = $"No TableFileHistory response result for {tableSchema.TableName}";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText, Color.DarkOrange);
+                return false;
+            }
+
+            if (resultGetListTableFileHistory.ResultCode != ResponseResultCode.Ok)
+            {
+                logText = $"Process table {tableSchema.TableName}: {resultGetListTableFileHistory.ResultDescription}";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText, Color.DarkOrange);
+                return false;
+            }
+
+            IEnumerable<TableFileHistory> listTableFileHistory;
+            if (sequence != null && sequence > 0)
+            {
+                listTableFileHistory = resultGetListTableFileHistory.ResultValue.Where(x => x.Sequence == sequence);
+            }
+            else
+            {
+                listTableFileHistory = resultGetListTableFileHistory.ResultValue;
+            }
+
+            if (listTableFileHistory.Any() == false)
             {
                 logText = "no data Table File History";
                 _logger.LogInformation(logText);
@@ -427,29 +490,166 @@ namespace CanvasDataDemo
                 return false;
             }
 
-            int downloadSequence = tableFileHistory.Sequence;
+            foreach (TableFileHistory tableFileHistory in listTableFileHistory.OrderByDescending(x => x.Sequence))
+            {
+                if (_bgwGetDataJob.CancellationPending == true)
+                {
+                    e.Cancel = true;
+                    break;
+                }
 
-            logText = $"Begin to process table: {tableSchema.TableName}" +
-                $", sequence: {downloadSequence}, partial: {tableFileHistory.Partial}";
+                ProcessGetDataByTableFileHistory(tableSchema, tableFileHistory);
+                // Partial == false nghĩa là Sequence này chứa toàn bộ dữ liệu trở về trước
+                if (tableFileHistory.Partial == false)
+                {
+                    break;
+                }
+            }
+
+            return true;
+        }
+
+        private string CreateTableNameInTableSyncIfNotExists(string tableName, bool incremental)
+        {
+            TableSync? tableSync = null;
+
+            try
+            {
+                tableSync = _tableSyncProvider.GetTableSync(tableName);
+            }
+            catch (Exception ex)
+            {
+                var logText = $"CreateTableNameInTableSyncIfNotExists, GetTableSync TableName:{tableName} failed: " + ex.Message;
+                _logger.LogError(logText);
+                return ex.Message;
+            }
+
+            if (tableSync is null)
+            {
+                try
+                {
+                    tableSync = _tableSyncProvider.AddTableToTableSync(tableName, incremental);
+                }
+                catch (Exception ex)
+                {
+                    var logText = $"CreateTableNameInTableSyncIfNotExists, AddTableToTableSync TableName: {tableName} failed: " + ex.Message;
+                    _logger.LogError(logText);
+                    return ex.Message;
+                }
+            }
+
+            return String.Empty;
+        }
+
+        private ResponseResult<List<TableFileHistory>> GetTableFileAndDownloadToDataFolderForIncremental(TableSchema tableSchema)
+        {
+            string tableName = tableSchema.TableName;
+
+            var result = new ResponseResult<List<TableFileHistory>>();
+            result.ResultCode = ResponseResultCode.NoResult;
+
+            var responseGetTableFile = this._canvasDataApiHelper.GetTableFile(ApiKey, ApiSecret, TableFileUrl, tableName);
+
+            if (responseGetTableFile.ResultCode != ResponseResultCode.Ok)
+            {
+                var logText = $"GetTableFileAndDownloadToDataFolderForIncremental failed to GetTableFile: {responseGetTableFile.ResultDescription}";
+                _logger.LogInformation(logText);
+                InvokeWriteNotes(logText, Color.DarkOrange);
+
+                result.ResultCode = ResponseResultCode.Fail;
+                result.ResultDescription = responseGetTableFile.ResultDescription;
+                return result;
+            }
+
+            TableFile tableFile = responseGetTableFile.ResultValue;
+
+            string errorMessage = CreateTableNameInTableSyncIfNotExists(tableName, tableSchema.Incremental);
+            if (string.IsNullOrEmpty(errorMessage) == false)
+            {
+                var logText = $"GetTableFileAndDownloadToDataFolderForIncremental, CreateTableNameInTableSyncIfNotExists TableName:{tableName} failed: {errorMessage}";
+                _logger.LogError(logText);
+                result.ResultCode = ResponseResultCode.Fail;
+                result.ResultDescription = logText;
+                return result;
+            }
+
+            IEnumerable<TableSyncHistory> tableSyncHistory = null;
+
+            try
+            {
+                tableSyncHistory = _tableSyncProvider.GetListTableSyncHistorySequence(tableName);
+            }
+            catch (Exception ex)
+            {
+                var logText = $"GetTableFileAndDownloadToDataFolderForIncremental, GetListTableSyncHistoryBySequence TableName:{tableName} failed: " + ex.Message;
+                _logger.LogError(logText);
+                result.ResultCode = ResponseResultCode.Fail;
+                result.ResultDescription = logText;
+                return result;
+            }
+
+            List<TableFileHistory> listTableFileHistory = tableFile.ListHistory;
+            if (listTableFileHistory is null || listTableFileHistory.Count <= 0)
+            {
+                result.ResultCode = ResponseResultCode.NoResult;
+                result.ResultDescription = $"No file sequence history to sync for {tableName}";
+                return result;
+            }
+
+            try
+            {
+                var notYetSync = from a in listTableFileHistory
+                                 join alreadySync in tableSyncHistory
+                                 on a.Sequence equals alreadySync.Sequence into ps
+                                 from p in ps.DefaultIfEmpty()
+                                 where p is null
+                                 select new TableFileHistory()
+                                 {
+                                     FileInfo = a.FileInfo,
+                                     DumpId = a.DumpId,
+                                     Partial = a.Partial,
+                                     Sequence = a.Sequence
+                                 };
+
+                result.ResultCode = ResponseResultCode.Ok;
+                result.ResultDescription = "Succeeded";
+                result.ResultValue = notYetSync.ToList();
+            }
+            catch (Exception ex)
+            {
+                var logText = $"GetTableFileAndDownloadToDataFolderForIncremental, Get fileHistoryNotYetSynced for TableName:{tableName} failed: " + ex.Message;
+                _logger.LogError(logText);
+                result.ResultCode = ResponseResultCode.Fail;
+                result.ResultDescription = logText;
+                return result;
+            }
+
+            return result;
+        }
+
+        private bool ProcessGetDataByTableFileHistory(TableSchema tableSchema, TableFileHistory tableFileHistory)
+        {
+            int downloadSequence = tableFileHistory.Sequence;
+            var logText = $"Begin to process table: {tableSchema.TableName}" +
+                                $", sequence: {downloadSequence}, partial: {tableFileHistory.Partial}";
             _logger.LogInformation(logText);
             InvokeWriteNotes(logText);
 
-            _logger.LogInformation($"DownloadFileToFileDataFolder: {tableSchema.TableName}");
+            _logger.LogInformation($"DownloadFileToFileDataFolder: {tableSchema.TableName}, sequence: {downloadSequence}");
             string decompressedFileNameFullPath = DownloadFileToFileDataFolder(tableFileHistory.FileInfo);
 
             if (string.IsNullOrEmpty(decompressedFileNameFullPath))
             {
-                logText = $"No decompressedFileNameFullPath to process, table: {tableSchema.TableName}";
+                logText = $"No decompressedFileNameFullPath to process, table: {tableSchema.TableName}, sequence: {downloadSequence}";
                 _logger.LogInformation(logText);
                 InvokeWriteNotes(logText, Color.DarkOrange);
                 return false;
             }
-
             string writeFilePath = this.GenerateJsonFile ? GetFullPathFolderFileData() + tableSchema.TableName + ".json" : string.Empty;
-
             DataTable dtData = null;
 
-            _logger.LogInformation($"MappingDataRawWithSchemaToDataTable table: {tableSchema.TableName}, decompressedFileNameFullPath:{decompressedFileNameFullPath}, " +
+            _logger.LogInformation($"MappingDataRawWithSchemaToDataTable table: {tableSchema.TableName}, sequence: {downloadSequence}, " +
+                $"decompressedFileNameFullPath:{decompressedFileNameFullPath}, " +
                 $"writeFilePath: {writeFilePath}");
             try
             {
@@ -463,14 +663,12 @@ namespace CanvasDataDemo
                 return false;
             }
 
-            _logger.LogInformation($"InsertDataToTable");
+            _logger.LogInformation($"InsertDataToTable {tableSchema.TableName}, sequence: {downloadSequence}");
 
             int? latestSequence = null;
             try
             {
-                var tableSyncProvider = new TableSyncProvider();
-                TableSync? tableSync = null;
-                tableSync = tableSyncProvider.GetTableSync(tableSchema.TableName);
+                TableSync? tableSync = _tableSyncProvider.GetTableSync(tableSchema.TableName);
                 latestSequence = tableSync.LatestSequence;
             }
             catch (Exception ex)
@@ -480,7 +678,7 @@ namespace CanvasDataDemo
                 InvokeWriteNotes(logText, Color.Red);
             }
 
-            var response = _databaseProvider.InsertDataToTable(tableSchema, tableFileHistory, dtData, latestSequence);
+            var response = _baseProvider.InsertDataToTable(tableSchema, tableFileHistory, dtData, latestSequence);
             if (response.ResultCode == ResponseResultCode.Ok)
             {
                 logText = $"Sucessfully process table: {tableSchema.TableName}, sequence: {downloadSequence}";
@@ -555,12 +753,11 @@ namespace CanvasDataDemo
 
             TableFile tableFile = responseGetTableFile.ResultValue;
 
-            var tableSyncProvider = new TableSyncProvider();
             TableSync? tableSync = null;
 
             try
             {
-                tableSync = tableSyncProvider.GetTableSync(tableName);
+                tableSync = _tableSyncProvider.GetTableSync(tableName);
             }
             catch (Exception ex)
             {
@@ -575,7 +772,7 @@ namespace CanvasDataDemo
             {
                 try
                 {
-                    tableSync = tableSyncProvider.AddTableToTableSync(tableName, tableSchema.Incremental);
+                    tableSync = _tableSyncProvider.AddTableToTableSync(tableName, tableSchema.Incremental);
                 }
                 catch (Exception ex)
                 {
@@ -610,7 +807,7 @@ namespace CanvasDataDemo
 
                 if (tableSync.LatestSequence >= maxSequenceOfTableFile)
                 {
-                    result.ResultCode = ResponseResultCode.Fail;
+                    result.ResultCode = ResponseResultCode.Warning;
                     result.ResultDescription = "Data is up to date";
                     return result;
                 }
@@ -830,7 +1027,7 @@ namespace CanvasDataDemo
 
                 var logText = $"Get Data Job has been cancelled";
                 _logger.LogInformation(logText);
-                InvokeWriteNotes(logText);
+                InvokeWriteNotes(logText, Color.Blue);
             }
             else
             {
@@ -956,8 +1153,7 @@ namespace CanvasDataDemo
         {
             try
             {
-                var tableSyncProvider = new TableSyncProvider();
-                var list = tableSyncProvider.GetListTableSync();
+                var list = _tableSyncProvider.GetListTableSync();
                 string content = JsonConvert.SerializeObject(list);
                 rtbResultData.Text = content;
             }
@@ -971,8 +1167,7 @@ namespace CanvasDataDemo
         {
             try
             {
-                var tableSyncProvider = new TableSyncProvider();
-                var list = tableSyncProvider.GetListTableSyncHistory();
+                var list = _tableSyncProvider.GetListTableSyncHistory();
                 string content = JsonConvert.SerializeObject(list);
                 rtbResultData.Text = content;
             }

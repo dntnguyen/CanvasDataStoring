@@ -18,7 +18,7 @@ namespace CanvasDataDemo
         public static string ApplicationName = "FxdCanvasDataImporter";
         public static int MainVersion = 0;
         public static int PatchVersion = 0;
-        public static int MinorVersion = 1;
+        public static int MinorVersion = 2;
 
         public static IConfiguration Configuration;
 
@@ -61,6 +61,8 @@ namespace CanvasDataDemo
                     services.AddTransient<ISettingHelper, SettingHelper>();
                     services.AddTransient<ICanvasDataApiHelper, CanvasDataApiHelper>();
                     services.AddTransient<BaseProvider, BaseProvider>();
+                    services.AddTransient<IBaseProvider, BaseProvider>();
+                    services.AddTransient<ITableSyncProvider, TableSyncProvider>();
                     services.AddTransient<MainForm>();
                     services.AddTransient<Form1>();
                 }).ConfigureLogging(logBuilder =>

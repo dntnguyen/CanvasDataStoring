@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace CanvasDataDemo.DatabaseProviders
 {
-    public class TableSyncProvider : BaseProvider
+    public class TableSyncProvider : BaseProvider, ITableSyncProvider
     {
         public TableSyncProvider()
         {
@@ -65,6 +65,33 @@ namespace CanvasDataDemo.DatabaseProviders
                 var parameters = new DynamicParameters();
 
                 var query = "SELECT * FROM dbo.TableSyncHistory ";
+
+                var result = sqlConnection.Query<TableSyncHistory>(
+                    query,
+                    parameters,
+                    commandType: CommandType.Text,
+                    commandTimeout: pDefaultQueryTimeoutInSecond);
+
+                return result;
+            }
+        }
+
+        public IEnumerable<TableSyncHistory> GetListTableSyncHistorySequence(string tableName)
+        {
+            using (var sqlConnection = new SqlConnection(pDefaultConnectionString))
+            {
+                sqlConnection.Open();
+                var parameters = new DynamicParameters();
+
+                var query = "SELECT TableName, Sequence FROM dbo.TableSyncHistory ";
+                query += "WHERE 2 = 2 ";
+                if (string.IsNullOrEmpty(tableName) == false)
+                {
+                    parameters.Add("@TableName", tableName);
+                    query += " AND TableName = @TableName " + Environment.NewLine;
+                }
+                query += " AND Partial = 1 " + Environment.NewLine;
+                query += " GROUP BY TableName, Sequence" + Environment.NewLine;
 
                 var result = sqlConnection.Query<TableSyncHistory>(
                     query,

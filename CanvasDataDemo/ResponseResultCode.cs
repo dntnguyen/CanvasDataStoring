@@ -11,5 +11,6 @@ namespace CanvasDataDemo
         NoResult = -1,
         Ok = 1,
         Fail = 0,
+        Warning = 2,
     }
 }

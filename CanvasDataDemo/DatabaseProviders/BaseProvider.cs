@@ -1,20 +1,15 @@
 ﻿using CanvasDataDemo.DatabaseHelper;
-using CanvasDataDemo.Datas;
 using CanvasDataDemo.Models;
 using Dapper;
-using log4net.Core;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CanvasDataDemo.DatabaseProviders
 {
-    public class BaseProvider
+    public class BaseProvider : IBaseProvider
     {
         protected int pDefaultQueryTimeoutInSecond = MyConnection.DEFAULT_QUERY_TIMEOUT_IN_SECOND;
 
@@ -110,7 +105,7 @@ namespace CanvasDataDemo.DatabaseProviders
             return sqlUpdateTableSync;
         }
 
-        public virtual ResponseResult InsertDataToTable(TableSchema tableSchema, 
+        public virtual ResponseResult InsertDataToTable(TableSchema tableSchema,
             TableFileHistory tableFileHistory, DataTable dtData, int? latestSequence = null)
         {
             var res = new ResponseResult();
