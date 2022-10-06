@@ -348,3 +348,5 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+/Scripts/1.vw_fxd_university_attendance.sql
+/Scripts/1.vw_fxd_university_submission_assignment_course_account.sql

@@ -322,7 +322,7 @@ namespace CanvasDataDemo.DatabaseProviders
                 "CONSTRAINT[PK_TableSyncs] PRIMARY KEY CLUSTERED " + Environment.NewLine +
                 "( " + Environment.NewLine +
                 "[TableName] ASC " + Environment.NewLine +
-                ")WITH(PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON[PRIMARY] " + Environment.NewLine +
+                ") " + Environment.NewLine +
                 ") ON[PRIMARY] " + Environment.NewLine +
             "END " + Environment.NewLine +
             "ELSE " + Environment.NewLine +
