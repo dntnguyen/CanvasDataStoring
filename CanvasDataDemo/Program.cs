@@ -18,7 +18,7 @@ namespace CanvasDataDemo
         public static string ApplicationName = "FxdCanvasDataImporter";
         public static int MainVersion = 0;
         public static int PatchVersion = 0;
-        public static int MinorVersion = 2;
+        public static int MinorVersion = 3;
 
         public static IConfiguration Configuration;
 
